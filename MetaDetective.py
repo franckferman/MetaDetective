@@ -37,19 +37,6 @@ EXIFTOOL_NOT_INSTALLED = "Error: exiftool is not installed. Please install it to
 EXIFTOOL_EXECUTION_ERROR = "Error: exiftool encountered an error."
 
 
-def create_banner_old(text: str = "MetaDetective", font: str = 'cybermedium') -> str:
-    """
-    Generate and return a banner text using the specified font.
-
-    Args:
-        text (str): The text to be rendered in the banner. Defaults to "MetaDetective".
-        font (str): The font style to be used for the banner. Defaults to 'cybermedium'.
-
-    Returns:
-        str: The rendered banner text.
-    """
-    return pyfiglet.Figlet(font=font).renderText(text)
-
 def show_banner():
     print(BANNER)
 
