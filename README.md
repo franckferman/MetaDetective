@@ -27,6 +27,8 @@ Crafted to bridge the gap in metadata extraction and analysis.
 <a href="https://github.com/franckferman/MetaDetective/issues">Request Feature</a>
 </p>
 
+<img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Screenshot-MetaDetective_Demo.png" alt="MetaDetective Demo Screenshot" width="auto" height="auto">
+
 </div>
 </div>
 
