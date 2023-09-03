@@ -5,6 +5,7 @@
 [![Stargazers][stars-shield]](https://github.com/franckferman/MetaDetective/stargazers)
 [![Issues][issues-shield]](https://github.com/franckferman/MetaDetective/issues)
 [![MIT License][license-shield]](https://github.com/franckferman/MetaDetective/blob/main/LICENSE)
+[![GitHub unittest Workflow Status][unittest-shield]](https://github.com/franckferman/MetaDetective/actions/workflows/unittest.yml)
 
 <div align="center">
 <a href="https://github.com/franckferman/MetaDetective">
@@ -245,5 +246,6 @@ This project is licensed under the GNU Affero General Public License, Version 3.
 [issues-url]: https://github.com/franckferman/MetaDetective/issues
 [license-shield]: https://img.shields.io/github/license/franckferman/MetaDetective.svg?style=for-the-badge
 [license-url]: https://github.com/franckferman/MetaDetective/blob/master/LICENSE
+[unittest-shield]: https://img.shields.io/github/actions/workflow/status/franckferman/MetaDetective/unittest.yml?style=for-the-badge
 [protonmail-shield]: https://img.shields.io/badge/ProtonMail-8B89CC?style=for-the-badge&logo=protonmail&logoColor=white
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=blue
