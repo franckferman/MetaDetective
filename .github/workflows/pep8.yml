@@ -1,0 +1,28 @@
+name: pep8
+
+on:
+  push:
+    branches:
+      - stable
+  pull_request:
+    branches:
+      - stable
+
+jobs:
+  flake8:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+
+    - name: Install flake8
+      run: pip install flake8
+
+    - name: Check PEP8 compliance
+      run: flake8 . --count --max-line-length=140 --exclude=tests
