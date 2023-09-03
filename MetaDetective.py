@@ -198,8 +198,8 @@ def main():
                                             "  python3 MetaDetective.py -d directory\n"
                                             "  python3 MetaDetective.py -d directory -i ^admin anonymous -t doc pdf\n"
                                             "  python3 MetaDetective.py -d directory -t all -display singular -format formatted\n",
-                                    formatter_class=argparse.RawTextHelpFormatter
-                                    )
+                                     formatter_class=argparse.RawTextHelpFormatter
+                                     )
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-d', '--directory', help="Directory to analyze.")
