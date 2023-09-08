@@ -316,11 +316,11 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-d', '--directory', help="Directory to analyze.")
     group.add_argument('-f', '--files', nargs='+', help="File or list of files to analyze.")
-    parser.add_argument('--APTX4869', action='store_true', help="Nod to Detective Conan. Opens a specific YouTube link.")
     parser.add_argument('-i', '--ignore', nargs='+', help="Ignore specific items in display using regex or words.")
     parser.add_argument('-t', '--type', nargs='+', default=['all'], help="File extension(s) or 'all' for all files.")
     parser.add_argument('-display', choices=['all', 'singular'], default='singular', help="Display mode: 'all' or 'singular'")
     parser.add_argument('-format', choices=['formatted', 'concise'], help="Display format for 'singular' mode: 'formatted' or 'concise'")
+    parser.add_argument('--APTX4869', action='store_true', help="Nod to Detective Conan. Opens a specific YouTube link.")
 
     args = parser.parse_args()
 
