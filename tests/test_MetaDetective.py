@@ -20,7 +20,7 @@ class TestMetaDetective(unittest.TestCase):
     def test_open_browser_failure(self):
         with patch('webbrowser.get') as mocked_get:
             browser = MagicMock()
-            browser.open.side_effect = webbrowser.Error
+            browser.open.return_value = False
             mocked_get.return_value = browser
             result = open_browser('https://example.com')
             self.assertFalse(result)
