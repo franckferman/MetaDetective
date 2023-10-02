@@ -15,7 +15,6 @@ import os
 import re
 import subprocess
 import sys
-import webbrowser
 from argparse import Namespace
 from collections import defaultdict
 from typing import Dict, List, Tuple, Optional
@@ -45,36 +44,6 @@ UNIQUE_FIELDS = [
 def show_banner() -> None:
     """Print the banner."""
     print(BANNER)
-
-
-def open_browser(url: str, preferred_browsers: List[str] = ['chrome', 'chromium', 'firefox']) -> bool:
-    """
-    Attempt to open a URL in one of the preferred browsers.
-
-    Tries to open the specified URL using the browsers
-    listed in the `preferred_browsers` in the order they are given.
-    If none succeed, it falls back to the system's default browser.
-
-    Args:
-        url (str): The URL to be opened.
-        preferred_browsers (List[str], optional): A list of browser names, in priority order.
-            Defaults to ['chrome', 'chromium', 'firefox'].
-
-    Returns:
-        bool: True if the URL is successfully opened in a browser; False otherwise.
-    """
-    for browser in preferred_browsers:
-        try:
-            webbrowser.get(browser).open(url)
-            return True
-        except webbrowser.Error:
-            continue
-
-    try:
-        webbrowser.open(url)
-        return True
-    except webbrowser.Error:
-        return False
 
 
 def check_exiftool_installed() -> None:
@@ -455,16 +424,8 @@ def main():
     parser.add_argument('-display', choices=['all', 'singular'], default='singular', help="Display mode: 'all' or 'singular'")
     parser.add_argument('-format', choices=['formatted', 'concise'], help="Display format for 'singular' mode: 'formatted' or 'concise'")
     parser.add_argument('-e', '--export', nargs='?', const=True, default=False, help="Export results. Default filename used if none given.")
-    parser.add_argument('--APTX4869', action='store_true', help="Nod to Detective Conan. Opens a specific YouTube link.")
 
     args = parser.parse_args()
-
-    if args.APTX4869:
-        if open_browser('https://youtu.be/3gSN-LR0NTw'):
-            sys.exit(0)
-        else:
-            print("Error: No suitable browser found to open the URL.")
-            sys.exit(1)
 
     ignore_patterns = args.ignore if args.ignore else []
 
