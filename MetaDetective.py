@@ -356,6 +356,19 @@ def export_metadata_to_html(args: Namespace, all_metadata: List[Dict[str, str]],
             border-top: 1px solid #333;
             margin-top: 10px;
         }
+        a:link {
+            color: #BBB;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        a:visited {
+            color: #888;
+            text-decoration: none;
+        }
+        a:hover {
+            color: #FFF;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
