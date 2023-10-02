@@ -314,7 +314,55 @@ def export_metadata_to_html(args: Namespace, all_metadata: List[Dict[str, str]],
     Returns:
         str: HTML representation of the metadata.
     """
-    html_parts = ['<html><head><title>Metadata Export</title></head><body>']
+    html_parts = ['''<html>
+<head>
+    <title>MetaDetective Export</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #EAEAEA;
+            padding: 20px;
+            margin: 0;
+        }
+        .header {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .metadata-entry {
+            background-color: #1E1E1E;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        p {
+            margin: 5px 0;
+        }
+        strong {
+            color: #EAEAEA;
+        }
+        h3 {
+            color: #BBB;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        hr {
+            border: 0;
+            border-top: 1px solid #333;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>MetaDetective Export Report</h1>
+    </div>
+''']
 
     if args.display == "all":
         for metadata in all_metadata:
