@@ -236,7 +236,7 @@ We truly appreciate and welcome community involvement. Your contributions, feedb
 
 ## 📚 License
 
-This project is licensed under the GNU Affero General Public License, Version 3.0. For more details, please refer to the LICENSE file in the repository: [LICENSE](https://github.com/franckferman/MetaDetective/blob/master/LICENSE)
+This project is licensed under the GNU Affero General Public License, Version 3.0. For more details, please refer to the LICENSE file in the repository: [Read the license on GitHub](https://github.com/franckferman/MetaDetective/blob/master/LICENSE)
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 

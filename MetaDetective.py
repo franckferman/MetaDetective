@@ -4,7 +4,7 @@
 
 Created By  : Franck FERMAN @franckferman
 Created Date: 27/08/2023
-Version     : 1.0.1 (08/09/2023)
+Version     : 1.0.2 (03/10/2023)
 """
 
 import argparse
