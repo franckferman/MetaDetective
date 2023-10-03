@@ -48,13 +48,7 @@ Crafted to bridge the gap in metadata extraction and analysis.
 
 ## About
 
-In the intricate landscape of cybersecurity, metadata stands sometimes as a goldmine of information. From the shadows of a pentesting reconnaissance mission to the foreground of Open Source Intelligence (OSINT) undertakings, these subtle snippets of data often carry revelatory insights. MetaDetective, a Python 3 tool, is meticulously engineered to sift through, extract, and elegantly display this trove.
-
-In its recent version on Kali Linux, Metagoofil shifted its focus away from direct metadata analysis, as Kali's official documentation indicates a choice to rely on external utilities like exiftool.
-
-While designed primarily to address the gap left by Metagoofil, MetaDetective's functionality extends beyond this scope, proving beneficial even outside of Metagoofil's context. Responding adeptly to this need, MetaDetective offers a versatile approach. Whether you're focusing on a single file, a collection of files, an entire directory, or even refining your search by specific file extensions, this tool has got you covered. Additional features allow for result filtering using keywords or regex, tailored formatting options, and deduplication to provide a concise, centralized display of results. Through its autonomous extraction, categorization, and presentation, MetaDetective showcases vital metadata points—author credentials, modification records, embedded hyperlinks, and the software tools used, among others. Each metadata element can be instrumental, potentially reshaping the trajectory of a cybersecurity probe.
-
-While MetaDetective may not brand itself as revolutionary, it confidently stands as an essential addition to the toolkit of cybersecurity professionals and enthusiasts alike.
+Metadata often holds critical insights in cybersecurity, playing a pivotal role in OSINT and pentesting. With Metagoofil on Kali Linux pivoting away from direct metadata analysis, a gap emerged. Enter MetaDetective: a Python 3 tool adeptly filling this void. It efficiently extracts, categorizes, and displays metadata from single or multiple files, even supporting specific file extensions and result filtering. From author credentials and modification logs to embedded links and software details, it illuminates potential cybersecurity investigation pathways. While not claiming to be groundbreaking, MetaDetective is undeniably a valuable asset for cybersecurity aficionados.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
@@ -110,6 +104,11 @@ python3 MetaDetective.py -d directory -i ^admin anonymous -t doc pdf
 - Analyzing all types of files within a directory in singular mode display, with a formatted mode type:
 ```bash
 python3 MetaDetective.py -d directory -t all -display singular -format formatted
+```
+
+- Analyzing all files within a directory (with default settings) and exporting the results to HTML:
+```bash
+python3 MetaDetective.py -d directory --export MD_Export-Case_1.html
 ```
 
 1. **Getting Started**
@@ -207,6 +206,20 @@ Or use -format concise, for a simpler look:
 python3 MetaDetective.py -display all -format concise
 ```
 
+**Export Options**
+
+For users seeking to export their results for in-depth analysis or record-keeping, the -e or --export option is available.
+
+To export using the default filename combined with an auto-generated timestamp:
+```bash
+python3 MetaDetective.py -d directory -e
+```
+
+For a customized filename, simply provide the desired name after the --export or -e flag:
+```bash
+python3 MetaDetective.py -d directory --export MD_Export-Case_1.html
+```
+
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
 ## 🔧 Troubleshooting
@@ -223,13 +236,13 @@ We truly appreciate and welcome community involvement. Your contributions, feedb
 
 ## 📚 License
 
-This project is licensed under the GNU Affero General Public License, Version 3.0. For more details, please refer to the LICENSE file in the repository: [Read the license on GitHub](https://github.com/franckferman/MetaDetective/blob/master/LICENSE)
+This project is licensed under the GNU Affero General Public License, Version 3.0. For more details, please refer to the LICENSE file in the repository: [LICENSE](https://github.com/franckferman/MetaDetective/blob/master/LICENSE)
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
 ## Contact
 
-[![ProtonMail][protonmail-shield]](mailto:fferman@protonmail.ch) 
+[![ProtonMail][protonmail-shield]](mailto:contact@franckferman.fr) 
 [![LinkedIn][linkedin-shield]](https://www.linkedin.com/in/franckferman)
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
