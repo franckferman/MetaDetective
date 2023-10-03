@@ -217,7 +217,7 @@ class TestGetAddressFromCoords(unittest.TestCase):
         }).encode("utf-8")
         mock_conn.return_value.getresponse.return_value = mock_response
         
-        address = get_address_from_coords("35.669306091001445", "139.7060701715393")
+        address = get_address_from_coords("35.66930", "139.70607")
         
         self.assertEqual(address, "4 Chome-31-10 Jingumae, Shibuya City, Tokyo 150-0001, Japon")
         
