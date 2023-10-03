@@ -48,7 +48,7 @@ Crafted to bridge the gap in metadata extraction and analysis.
 
 ## About
 
-Metadata often holds critical insights in cybersecurity, playing a pivotal role in OSINT and pentesting. With Metagoofil on Kali Linux pivoting away from direct metadata analysis, a gap emerged. Enter MetaDetective: a Python 3 tool adeptly filling this void. It efficiently extracts, categorizes, and displays metadata from single or multiple files, even supporting specific file extensions and result filtering. From author credentials and modification logs to embedded links and software details, it illuminates potential cybersecurity investigation pathways. While not claiming to be groundbreaking, MetaDetective is undeniably a valuable asset for cybersecurity aficionados.
+Metadata often holds critical insights in cybersecurity, playing a pivotal role in OSINT and pentesting. With Metagoofil on Kali Linux pivoting away from direct metadata analysis, a gap emerged. Enter MetaDetective: a Python 3 tool adeptly filling this void. It efficiently extracts, categorizes, and displays metadata from single or multiple files, even supporting specific file extensions and result filtering. From author credentials and modification logs to embedded links and software details, and even GPS data, it illuminates potential cybersecurity investigation pathways. While not claiming to be groundbreaking, MetaDetective is undeniably a valuable asset for cybersecurity aficionados.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 

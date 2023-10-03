@@ -1,16 +1,23 @@
 ## TODO
 
-- [X] ~~**Add:** Improve metadata fields especially for GPS data~~
-  - ~~Currently, some metadata fields are missing. Especially, consider adding fields for displaying geolocation and device type information for images.~~
-  - ~~Implement a function that converts GPS data into links for OSM (OpenStreetMap) or Google Maps, providing users with visualized location data.~~
+### Metadata enhancements
 
-- [ ] **Add:** Export data in various formats
-- ~~Develop a feature to allow users to export data in HTML format.~~
-- Develop a feature to allow users to export data in PDF format.
-- Develop a feature to allow users to export data in TXT format.
-- Provide customizable export options to tailor the exported content to user preferences.
+- [X] ~~**GPS and photo metadata improvements**~~
+  - ~~Add missing metadata fields, especially for geolocation, camera model name, and other device-specific information for images.~~
+  - ~~Develop a function to convert GPS data to OSM or Google Maps links.~~
 
-- [ ] **Add:** Develop a meaningful and comprehensive test file
-  - ~~Design and implement a test suite that covers the functionality of key modules and functions.~~
-  - ~~Ensure that the tests provide thorough coverage and effectively validate the expected behavior of the code.~~
-  - Enhance and improve tests for all existing functions.
+### Data export features
+
+- [ ] **Support various export formats**
+  - ~~Added support for exporting data in HTML format.~~
+  - Add support for exporting data in PDF format.
+  - Add support for exporting data in TXT format.
+  - Implement customizable export options for users.
+
+### Testing and quality assurance
+
+- [ ] **Develop robust tests**
+  - ~~Created a test suite for key modules and functions.~~
+  - ~~Achieved broad test coverage to validate expected code behavior.~~
+  - Improve and expand tests for all functions.
+  - Achieve comprehensive test coverage to ensure all functionalities are accurately validated.
