@@ -13,7 +13,7 @@ MetaDetective is a Python 3 tool designed for advanced metadata analysis pivotal
 To build and run the Docker image:
 
 ```bash
-$ sudo ./start.sh
+sudo ./start.sh
 ```
 
 This script:
@@ -27,7 +27,7 @@ This script:
 To stop the running container and optionally remove the image:
 
 ```bash
-$ sudo ./remove.sh
+sudo ./remove.sh
 ```
 
 This script:
@@ -44,4 +44,3 @@ The Docker image is based on `debian:bullseye-slim` and installs:
 - libimage-exiftool-perl
 
 MetaDetective is cloned directly from its GitHub repository into the `app` directory within the container.
-
