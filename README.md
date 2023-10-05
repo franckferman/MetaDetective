@@ -222,6 +222,14 @@ python3 MetaDetective.py -d directory --export MD_Export-Case_1.html
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
+## 🐳 Docker Integration
+
+MetaDetective now offers a Dockerized version for easy setup and consistent execution.
+
+To set up and use MetaDetective with Docker, refer to the Docker-specific documentation available here: [MetaDetective Docker Setup](https://github.com/franckferman/MetaDetective/blob/stable/docker/README.md).
+
+<p align="right">(<a href="#top">🔼 Back to top</a>)</p>
+
 ## 🔧 Troubleshooting
 
 Encountering issues? Don't worry. If you come across any problems or have questions, please don't hesitate to submit a ticket for assistance: [Submit an issue on GitHub](https://github.com/franckferman/MetaDetective/issues)
