@@ -191,7 +191,7 @@ def get_address_from_coords(lat: str, lon: str) -> str:
     """
     try:
         conn = http.client.HTTPSConnection("nominatim.openstreetmap.org")
-        headers = {'User-Agent': 'MetaDetective/1.0.1'}
+        headers = {'User-Agent': 'MetaDetective/1.0.2'}
         conn.request("GET", f"/reverse?format=jsonv2&lat={lat}&lon={lon}", headers=headers)
 
         res = conn.getresponse()
