@@ -4,7 +4,7 @@
 [![Forks][forks-shield]](https://github.com/franckferman/MetaDetective/network/members)
 [![Stargazers][stars-shield]](https://github.com/franckferman/MetaDetective/stargazers)
 [![Issues][issues-shield]](https://github.com/franckferman/MetaDetective/issues)
-[![MIT License][license-shield]](https://github.com/franckferman/MetaDetective/blob/main/LICENSE)
+[![MIT License][license-shield]](https://github.com/franckferman/MetaDetective/blob/stable/LICENSE)
 [![GitHub unittest Workflow Status][unittest-shield]](https://github.com/franckferman/MetaDetective/actions/workflows/unittest.yml)
 
 <div align="center">
@@ -19,7 +19,7 @@
 <br>
 Crafted to bridge the gap in metadata extraction and analysis.
 <br><br>
-<a href="https://github.com/franckferman/MetaDetective/blob/master/README.md" class="button-style"><strong>Explore the full documentation »</strong></a>
+<a href="https://github.com/franckferman/MetaDetective/blob/stable/README.md" class="button-style"><strong>Explore the full documentation »</strong></a>
 <br><br>
 <a href="https://asciinema.org/a/GdFRcXxlnQMcpD6876zVhmpqO" class="button-style">View Demo</a>
 .
@@ -80,7 +80,7 @@ gh repo clone franckferman/MetaDetective
 
 - If you only need the script, you can also directly download it using curl:
 ```bash
-curl -O https://raw.githubusercontent.com/franckferman/MetaDetective/master/MetaDetective/MetaDetective.py
+curl -O https://raw.githubusercontent.com/franckferman/MetaDetective/stable/MetaDetective/MetaDetective.py
 ```
 
 This will provide you with the necessary project files.
@@ -244,7 +244,7 @@ We truly appreciate and welcome community involvement. Your contributions, feedb
 
 ## 📚 License
 
-This project is licensed under the GNU Affero General Public License, Version 3.0. For more details, please refer to the LICENSE file in the repository: [Read the license on GitHub](https://github.com/franckferman/MetaDetective/blob/master/LICENSE)
+This project is licensed under the GNU Affero General Public License, Version 3.0. For more details, please refer to the LICENSE file in the repository: [Read the license on GitHub](https://github.com/franckferman/MetaDetective/blob/stable/LICENSE)
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
@@ -266,7 +266,7 @@ This project is licensed under the GNU Affero General Public License, Version 3.
 [issues-shield]: https://img.shields.io/github/issues/franckferman/MetaDetective.svg?style=for-the-badge
 [issues-url]: https://github.com/franckferman/MetaDetective/issues
 [license-shield]: https://img.shields.io/github/license/franckferman/MetaDetective.svg?style=for-the-badge
-[license-url]: https://github.com/franckferman/MetaDetective/blob/master/LICENSE
+[license-url]: https://github.com/franckferman/MetaDetective/blob/stable/LICENSE
 [unittest-shield]: https://img.shields.io/github/actions/workflow/status/franckferman/MetaDetective/unittest.yml?style=for-the-badge
 [protonmail-shield]: https://img.shields.io/badge/ProtonMail-8B89CC?style=for-the-badge&logo=protonmail&logoColor=white
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=blue
