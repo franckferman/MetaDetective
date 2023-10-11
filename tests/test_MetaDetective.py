@@ -9,6 +9,8 @@ from typing import List
 from unittest.mock import Mock, patch
 import unittest
 
+sys.path.append("src/")
+
 from MetaDetective import (check_exiftool_installed, dms_to_dd, get_address_from_coords, 
                            get_files, get_metadata, matches_any_pattern, show_banner)
 
