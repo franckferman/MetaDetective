@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MetaDetective"
-version = "1.0.2"
+version = "1.0.3"
 description = "Unleash Metadata Intelligence with MetaDetective. Your Assistant Beyond Metagoofil."
 authors = [{ name = "Franck Ferman", email = "contact@franckferman.fr" }]
 license = { file = "LICENSE" }
@@ -17,7 +17,7 @@ classifiers = [
 ]
 readme = "README.md"
 keywords = ["metadata", "osint", "cyber-security"]
-requires-python = ">=3.9"
+requires-python = ">=3.9.0"
 
 [project.urls]
 home = "https://github.com/franckferman/MetaDetective"

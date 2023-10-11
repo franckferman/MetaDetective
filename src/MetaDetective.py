@@ -4,7 +4,7 @@
 
 Created By  : Franck FERMAN @franckferman
 Created Date: 27/08/2023
-Version     : 1.0.2 (03/10/2023)
+Version     : 1.0.3 (11/10/2023)
 """
 
 import argparse
@@ -191,7 +191,7 @@ def get_address_from_coords(lat: str, lon: str) -> str:
     """
     try:
         conn = http.client.HTTPSConnection("nominatim.openstreetmap.org")
-        headers = {'User-Agent': 'MetaDetective/1.0.2'}
+        headers = {'User-Agent': 'MetaDetective/1.0.3'}
         conn.request("GET", f"/reverse?format=jsonv2&lat={lat}&lon={lon}", headers=headers)
 
         res = conn.getresponse()
