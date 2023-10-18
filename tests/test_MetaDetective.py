@@ -9,7 +9,7 @@ from typing import List
 from unittest.mock import Mock, patch
 import unittest
 
-from MetaDetective import (check_exiftool_installed, dms_to_dd, get_address_from_coords, 
+from src.MetaDetective.MetaDetective import (check_exiftool_installed, dms_to_dd, get_address_from_coords, 
                            get_files, get_metadata, matches_any_pattern, show_banner)
 
 
