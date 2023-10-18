@@ -2,7 +2,7 @@ FROM debian:bullseye-slim
 
 LABEL maintainer="Franck FERMAN <contact@franckferman.fr>" \
       description="MetaDetective: A Python 3 tool designed for advanced metadata analysis pivotal in OSINT and pentesting." \
-      metadetective_version="1.0.2" \
+      metadetective_version="1.0.3" \
       docker_image_version="1.0.0"
 
 RUN apt-get update && apt-get install -y \
