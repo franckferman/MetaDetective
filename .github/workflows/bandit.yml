@@ -25,4 +25,4 @@ jobs:
       run: pip install bandit
 
     - name: Run Bandit
-      run: bandit ./MetaDetective.py || true
+      run: bandit ./src/MetaDetective/MetaDetective.py || true
