@@ -479,9 +479,8 @@ def export_metadata_to_txt(args: Namespace, all_metadata: List[Dict[str, str]], 
 def valid_filename(value: str) -> str:
     """
     Validate the given filename suffix.
-    
-    Check if the filename is alphanumeric, less than 16 characters, and can contain 
-    symbols '-' or '_', but not at the end.
+
+    Check if the filename is alphanumeric, less than 16 characters, and can contain symbols '-' or '_', but not at the end.
 
     Args:
         value (str): The filename suffix to validate.
