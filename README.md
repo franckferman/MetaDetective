@@ -9,7 +9,7 @@
 
 <div align="center">
 <a href="https://github.com/franckferman/MetaDetective">
-<img src="./docs/github/graphical_resources/Logo-Without_background-MetaDetective.png" alt="MetaDetective logo, without background" width="auto" height="auto">
+<img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Logo-Without_background-MetaDetective.png" alt="MetaDetective logo, without background" width="auto" height="auto">
 </a>
 
 <h3 align="center">MetaDetective</h3>
