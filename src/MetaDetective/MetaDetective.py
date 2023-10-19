@@ -476,22 +476,21 @@ def export_metadata_to_txt(args: Namespace, all_metadata: List[Dict[str, str]], 
     return output.getvalue()
 
 
-def valid_filename(value):
-    """Validate filename suffix.
+def valid_filename(value: str) -> str:
+    """
+    Validate the given filename suffix.
+    
+    Check if the filename is alphanumeric, less than 16 characters, and can contain 
+    symbols '-' or '_', but not at the end.
 
-    Check if the given filename suffix is valid. The filename should be:
-    - Alphanumeric (both uppercase and lowercase allowed).
-    - Less than 16 characters.
-    - Can contain symbols '-' or '_', but not at the end.
-
-    Parameters:
-    - value (str): The filename suffix to validate.
+    Args:
+        value (str): The filename suffix to validate.
 
     Returns:
-    - str: The valid filename suffix.
+        str: The valid filename suffix.
 
     Raises:
-    - argparse.ArgumentTypeError: If the filename suffix is invalid.
+        argparse.ArgumentTypeError: If the filename suffix is invalid.
     """
     if not value:
         raise argparse.ArgumentTypeError("Filename suffix is empty.")
@@ -509,19 +508,18 @@ def valid_filename(value):
     return value
 
 
-def valid_directory(path):
-    """Validate directory path.
+def valid_directory(path: str) -> str:
+    """
+    Validate directory path.
 
-    Check if the given path is a valid directory.
-
-    Parameters:
-    - path (str): The directory path to validate.
+    Args:
+        path (str): The directory path to validate.
 
     Returns:
-    - str: The valid directory path.
+        str: The valid directory path.
 
     Raises:
-    - argparse.ArgumentTypeError: If the directory path is invalid or doesn't exist.
+        argparse.ArgumentTypeError: If the directory path is invalid or doesn't exist.
     """
     if not os.path.exists(path):
         raise argparse.ArgumentTypeError(f"Directory path '{path}' does not exist.")
