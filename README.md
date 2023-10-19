@@ -226,16 +226,16 @@ python3 MetaDetective.py -display all -format concise
 
 The -e or --export option provides the ability to export your metadata results. This can be useful for further analysis, sharing, or for maintaining a record of your findings.
 
-The default export format is PDF. However, for those who have a preference or specific need, we also offer the option to export in TXT format.
+The default export format is HTML. However, for those who have a preference or specific need, we also offer the option to export in TXT format.
 
-- PDF Export (Default):
+- HTML Export (Default):
 
 Execute the following command for a default export:
 ```bash
 python3 MetaDetective.py -d directory -e
 ```
 
-This command will generate a PDF file with the naming pattern: MetaDetective_Export-<TIMESTAMP>.pdf.
+This command will generate an HTML file with the naming pattern: MetaDetective_Export-<TIMESTAMP>.html.
 
 - TXT Format Export:
 

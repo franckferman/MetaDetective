@@ -10,9 +10,9 @@
 
 - [ ] **Support various export formats**
   - ~~Added support for exporting data in HTML format.~~
-  - Add support for exporting data in PDF format.
-  - Add support for exporting data in TXT format.
-  - Implement customizable export options for users.
+  - ~~Added support for exporting data in TXT format.~~
+  - ~~Implement customizable export options for users.~~
+  - Implement advanced customizable export options for users.
 
 ### Testing and quality assurance
 
