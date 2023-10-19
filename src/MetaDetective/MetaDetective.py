@@ -476,6 +476,62 @@ def export_metadata_to_txt(args: Namespace, all_metadata: List[Dict[str, str]], 
     return output.getvalue()
 
 
+def valid_filename(value):
+    """Validate filename suffix.
+
+    Check if the given filename suffix is valid. The filename should be:
+    - Alphanumeric (both uppercase and lowercase allowed).
+    - Less than 16 characters.
+    - Can contain symbols '-' or '_', but not at the end.
+
+    Parameters:
+    - value (str): The filename suffix to validate.
+
+    Returns:
+    - str: The valid filename suffix.
+
+    Raises:
+    - argparse.ArgumentTypeError: If the filename suffix is invalid.
+    """
+    if not value:
+        raise argparse.ArgumentTypeError("Filename suffix is empty.")
+
+    if len(value) > 16:
+        raise argparse.ArgumentTypeError("Filename suffix is longer than 16 characters.")
+
+    if not value[-1].isalnum():
+        raise argparse.ArgumentTypeError("Filename suffix ends with an invalid character.")
+
+    for char in value:
+        if not char.isalnum() and char not in ['-', '_']:
+            raise argparse.ArgumentTypeError(f"Invalid character '{char}' in filename suffix.")
+
+    return value
+
+
+def valid_directory(path):
+    """Validate directory path.
+
+    Check if the given path is a valid directory.
+
+    Parameters:
+    - path (str): The directory path to validate.
+
+    Returns:
+    - str: The valid directory path.
+
+    Raises:
+    - argparse.ArgumentTypeError: If the directory path is invalid or doesn't exist.
+    """
+    if not os.path.exists(path):
+        raise argparse.ArgumentTypeError(f"Directory path '{path}' does not exist.")
+
+    if not os.path.isdir(path):
+        raise argparse.ArgumentTypeError(f"Path '{path}' is not a directory.")
+
+    return path
+
+
 def main():
     show_banner()
     check_exiftool_installed()
@@ -492,11 +548,17 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-d', '--directory', help="Directory to analyze.")
     group.add_argument('-f', '--files', nargs='+', help="File or list of files to analyze.")
-    parser.add_argument('-i', '--ignore', nargs='+', help="Ignore specific items in display using regex or words.")
     parser.add_argument('-t', '--type', nargs='+', default=['all'], help="File extension(s) or 'all' for all files.")
-    parser.add_argument('-display', choices=['all', 'singular'], default='singular', help="Display mode: 'all' or 'singular'")
-    parser.add_argument('-format', choices=['formatted', 'concise'], help="Display format for 'singular' mode: 'formatted' or 'concise'")
-    parser.add_argument('-e', '--export', nargs='?', const='html', choices=['html', 'txt'], default=None, help="Export results. Optional formats: 'html' or 'txt'. If not specified, 'html' is the default.")
+
+    display_group = parser.add_argument_group('display options', 'Options affecting how metadata is displayed')
+    display_group.add_argument('-i', '--ignore', nargs='+', help="Ignore specific items in display using regex or words.")
+    display_group.add_argument('-display', choices=['all', 'singular'], default='singular', help="Display mode: 'all' or 'singular'")
+    display_group.add_argument('-format', choices=['formatted', 'concise'], help="Display format for 'singular' mode: 'formatted' or 'concise'")
+
+    export_group = parser.add_argument_group('export options', 'Options for exporting metadata')
+    export_group.add_argument('-e', '--export', nargs='?', const='html', choices=['html', 'txt'], default=None, help="Export results. Optional formats: 'html' or 'txt'. If not specified, 'html' is the default.")
+    export_group.add_argument('-c', '--custom', type=valid_filename, help="Add a custom suffix to the export filename. It should be alphanumeric and less than 16 characters.")
+    export_group.add_argument('-o', '--output', type=valid_directory, default=os.getcwd(), help="Specify a custom output directory for the exported file.")
 
     args = parser.parse_args()
 
@@ -522,9 +584,12 @@ def main():
             file_extension = '.txt'
 
         timestamp = datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S')
-        filename = f"MetaDetective_Export-{timestamp}{file_extension}"
+        custom_suffix = f"{args.custom}-" if args.custom else ""
+        filename = f"MetaDetective_Export-{custom_suffix}{timestamp}{file_extension}"
 
-        with open(filename, "w") as f:
+        full_path = os.path.join(args.output, filename)
+
+        with open(full_path, "w") as f:
             f.write(content)
         print(f"Metadata exported to {filename}")
     else:
