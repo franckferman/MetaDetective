@@ -73,17 +73,33 @@ You have a couple of options to clone the repository:
 git clone https://github.com/franckferman/MetaDetective.git
 ```
 
-- Using GitHub CLI:
-```bash
-gh repo clone franckferman/MetaDetective
-```
-
 - If you only need the script, you can also directly download it using curl:
 ```bash
-curl -O https://raw.githubusercontent.com/franckferman/MetaDetective/stable/MetaDetective/MetaDetective.py
+curl -O https://raw.githubusercontent.com/franckferman/MetaDetective/stable/src/MetaDetective/MetaDetective.py
 ```
 
 This will provide you with the necessary project files.
+
+**Alternative Installation using Pip**:
+
+If you prefer to use the package directly without cloning the repository or to ensure you have the latest stable version, you can install MetaDetective using pip:
+
+1. Create a Virtual Environment:
+```bash
+python3 -m venv MetaDetectiveEnv
+```
+
+2. Activate the Virtual Environment:
+```bash
+source MetaDetectiveEnv/bin/activate
+```
+
+3. Install MetaDetective via Pip:
+```bash
+pip install MetaDetective
+```
+
+By following either of the above methods, you'll have MetaDetective set up and ready to use on your system.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
@@ -225,7 +241,7 @@ This command will generate a PDF file with the naming pattern: MetaDetective_Exp
 
 If you want your results in TXT format, append the desired format after the --export or -e flag:
 ```bash
-python3 MetaDetective.py -d directory --export=txt
+python3 MetaDetective.py -d directory --export txt
 ```
 
 Keep in mind that the export format can affect the presentation and usability of the data. Make sure to select the format that aligns with your intended use or preference.
