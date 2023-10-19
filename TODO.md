@@ -8,11 +8,11 @@
 
 ### Data export features
 
-- [ ] **Support various export formats**
+- [X] ~~**Support various export formats**~~
   - ~~Added support for exporting data in HTML format.~~
   - ~~Added support for exporting data in TXT format.~~
   - ~~Implement customizable export options for users.~~
-  - Implement advanced customizable export options for users.
+  - ~~Implement advanced customizable export options for users.~~
 
 ### Testing and quality assurance
 
