@@ -208,23 +208,33 @@ python3 MetaDetective.py -display all -format concise
 
 **Export Options**
 
-For users seeking to export their results for in-depth analysis or record-keeping, the -e or --export option is available.
+The -e or --export option provides the ability to export your metadata results. This can be useful for further analysis, sharing, or for maintaining a record of your findings.
 
-To export using the default filename combined with an auto-generated timestamp:
+The default export format is PDF. However, for those who have a preference or specific need, we also offer the option to export in TXT format.
+
+- PDF Export (Default):
+
+Execute the following command for a default export:
 ```bash
 python3 MetaDetective.py -d directory -e
 ```
 
-For a customized filename, simply provide the desired name after the --export or -e flag:
+This command will generate a PDF file with the naming pattern: MetaDetective_Export-<TIMESTAMP>.pdf.
+
+- TXT Format Export:
+
+If you want your results in TXT format, append the desired format after the --export or -e flag:
 ```bash
-python3 MetaDetective.py -d directory --export MD_Export-Case_1.html
+python3 MetaDetective.py -d directory --export=txt
 ```
+
+Keep in mind that the export format can affect the presentation and usability of the data. Make sure to select the format that aligns with your intended use or preference.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
 ## 🐳 Docker Integration
 
-MetaDetective now offers a Dockerized version for easy setup and consistent execution.
+MetaDetective offers a Dockerized version for easy setup and consistent execution.
 
 To set up and use MetaDetective with Docker, refer to the Docker-specific documentation available here: [MetaDetective Docker Setup](https://github.com/franckferman/MetaDetective/blob/stable/docker/README.md).
 
