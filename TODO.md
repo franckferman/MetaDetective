@@ -14,7 +14,7 @@
   - ~~Implement customizable export options for users.~~
   - ~~Implement advanced customizable export options for users.~~
 
-### Testing and quality assurance
+### Testing
 
 - [ ] **Develop robust tests**
   - ~~Created a test suite for key modules and functions.~~
@@ -24,8 +24,8 @@
 
 ### GitHub Actions
 
-- [ ] **PyPI Automatic Upload on Release**
-  - Integrate GitHub Actions to trigger PyPI package upload on every new release.
+- [X] ~~**PyPI Automatic Upload on Release**~~
+  - ~~Integrate GitHub Actions to trigger PyPI package upload on every new release.~~
 
 ### Documentation
 
