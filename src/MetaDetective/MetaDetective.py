@@ -485,7 +485,7 @@ def main():
                                             "  python3 MetaDetective.py -d directory\n"
                                             "  python3 MetaDetective.py -d directory -i ^admin anonymous -t doc pdf\n"
                                             "  python3 MetaDetective.py -d directory -t all -display singular -format formatted\n"
-                                            "  python3 MetaDetective.py -d directory --export MD_Export-Case_1.html\n",
+                                            "  python3 MetaDetective.py -d directory --export\n",
                                      formatter_class=argparse.RawTextHelpFormatter
                                      )
 
