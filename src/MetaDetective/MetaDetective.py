@@ -4,12 +4,13 @@
 
 Created By  : Franck FERMAN @franckferman
 Created Date: 27/08/2023
-Version     : 1.0.3 (03/10/2023)
+Version     : 1.0.4 (19/10/2023)
 """
 
 import argparse
 import datetime
 import http.client
+import io
 import json
 import os
 import re
@@ -191,7 +192,7 @@ def get_address_from_coords(lat: str, lon: str) -> str:
     """
     try:
         conn = http.client.HTTPSConnection("nominatim.openstreetmap.org")
-        headers = {'User-Agent': 'MetaDetective/1.0.3'}
+        headers = {'User-Agent': 'MetaDetective/1.0.4'}
         conn.request("GET", f"/reverse?format=jsonv2&lat={lat}&lon={lon}", headers=headers)
 
         res = conn.getresponse()
@@ -403,6 +404,78 @@ def export_metadata_to_html(args: Namespace, all_metadata: List[Dict[str, str]],
     return ''.join(html_parts)
 
 
+def export_metadata_to_txt(args: Namespace, all_metadata: List[Dict[str, str]], ignore_patterns: List[str]) -> str:
+    """
+    Convert metadata to a text string based on the provided arguments.
+
+    Args:
+        args (Namespace): The parsed command-line arguments.
+        all_metadata (List[Dict[str, str]]): List of dictionaries containing metadata.
+        ignore_patterns (List[str]): List of patterns to ignore.
+
+    Returns:
+        str: The formatted metadata as a string.
+    """
+    output = io.StringIO()
+
+    def print_to_buffer(*args, **kwargs):
+        print(*args, file=output, **kwargs)
+
+    if args.display == "all":
+        for metadata in all_metadata:
+            formatted_gps = metadata.get("Formatted GPS Position")
+            if formatted_gps:
+                lat, lon = formatted_gps.split(", ")
+                address = get_address_from_coords(lat, lon)
+                if address:
+                    metadata["Address"] = address
+                metadata["Map Link"] = f"https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
+
+            displayed_fields = 0
+
+            for field, value in metadata.items():
+                if field in FIELDS and value and not matches_any_pattern(value, ignore_patterns):
+                    print_to_buffer(f"{field}: {value}")
+                    displayed_fields += 1
+            if displayed_fields == 1:
+                print_to_buffer("No relevant metadata found.")
+            print_to_buffer("-" * 40)
+
+    elif args.display == "singular":
+        unique_values = defaultdict(set)
+
+        for metadata in all_metadata:
+            formatted_gps = metadata.get("Formatted GPS Position")
+            if formatted_gps:
+                lat, lon = formatted_gps.split(", ")
+                map_link = f"https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
+                if map_link:
+                    metadata["Map Link"] = map_link
+
+            for field in UNIQUE_FIELDS:
+                value = metadata.get(field, None)
+                if field == "Hyperlinks" and value:
+                    links = [link.strip() for link in value.split(',')]
+                    valid_links = [link for link in links if not matches_any_pattern(link, ignore_patterns)]
+                    if valid_links:
+                        unique_values[field].add(', '.join(valid_links))
+                elif value and not matches_any_pattern(value, ignore_patterns):
+                    unique_values[field].add(value)
+
+        for field, values in unique_values.items():
+            unique_cased_values = {next(v for v in values if v.lower() == value.lower()): None for value in values}.keys()
+            if unique_cased_values:
+                if args.format == 'formatted':
+                    print_to_buffer(f"{field}:")
+                    for unique_value in unique_cased_values:
+                        print_to_buffer(f"    - {unique_value}")
+                else:
+                    print_to_buffer(f"{field}: {', '.join(unique_cased_values)}")
+                print_to_buffer()
+
+    return output.getvalue()
+
+
 def main():
     show_banner()
     check_exiftool_installed()
@@ -423,7 +496,7 @@ def main():
     parser.add_argument('-t', '--type', nargs='+', default=['all'], help="File extension(s) or 'all' for all files.")
     parser.add_argument('-display', choices=['all', 'singular'], default='singular', help="Display mode: 'all' or 'singular'")
     parser.add_argument('-format', choices=['formatted', 'concise'], help="Display format for 'singular' mode: 'formatted' or 'concise'")
-    parser.add_argument('-e', '--export', nargs='?', const=True, default=False, help="Export results. Default filename used if none given.")
+    parser.add_argument('-e', '--export', nargs='?', const='html', choices=['html', 'txt'], default=None, help="Export results. Optional formats: 'html' or 'txt'. If not specified, 'html' is the default.")
 
     args = parser.parse_args()
 
@@ -441,18 +514,18 @@ def main():
     all_metadata = [get_metadata(file, FIELDS) for file in files]
 
     if args.export:
-        html_content = export_metadata_to_html(args, all_metadata, ignore_patterns)
-
-        if args.export is True:
-            timestamp = datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S')
-            filename = f"MetaDetective_Export-{timestamp}.html"
+        if args.export == 'html':
+            content = export_metadata_to_html(args, all_metadata, ignore_patterns)
+            file_extension = '.html'
         else:
-            filename = args.export
-            if not filename.endswith('.html'):
-                filename += '.html'
+            content = export_metadata_to_txt(args, all_metadata, ignore_patterns)
+            file_extension = '.txt'
+
+        timestamp = datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S')
+        filename = f"MetaDetective_Export-{timestamp}{file_extension}"
 
         with open(filename, "w") as f:
-            f.write(html_content)
+            f.write(content)
         print(f"Metadata exported to {filename}")
     else:
         display_metadata(args, all_metadata, ignore_patterns)
