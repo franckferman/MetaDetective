@@ -59,6 +59,9 @@ EXTENSIONS = [
     "doc", "docx", "odt", "pdf", "rtf", "tex", "wpd"
 ]
 
+EXIFTOOL_NOT_INSTALLED = "Error: exiftool is not installed. Please install it to continue."
+EXIFTOOL_EXECUTION_ERROR = "Error: exiftool encountered an error."
+
 
 def show_banner() -> None:
     """Print the banner."""
@@ -67,9 +70,6 @@ def show_banner() -> None:
 
 def check_exiftool_installed() -> None:
     """Verify exiftool installation and exit the program if absent or on execution error."""
-    EXIFTOOL_NOT_INSTALLED = "Error: exiftool is not installed. Please install it to continue."
-    EXIFTOOL_EXECUTION_ERROR = "Error: exiftool encountered an error."
-
     try:
         subprocess.run(["exiftool", "-ver"], capture_output=True, check=True, text=True)
     except FileNotFoundError:
