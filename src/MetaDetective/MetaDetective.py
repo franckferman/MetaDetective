@@ -580,14 +580,13 @@ def fetch_links_from_url(url: str) -> List[str]:
         List[str]: List of links found on the page.
     """
     try:
-        validated_url = valid_url(url)
-        response = urllib.request.urlopen(validated_url)
+        response = urllib.request.urlopen(url)
         data = response.read().decode()
         parser = LinkParser()
         parser.feed(data)
         return parser.links
     except Exception as e:
-        print(f"ERROR: Unable to fetch data from {validated_url}. Reason: {e}")
+        print(f"ERROR: Unable to fetch data from {url}. Reason: {e}")
         return []
 
 
@@ -687,14 +686,13 @@ def download_file(url: str, download_dir: str) -> None:
         download_dir (str): Directory where the file should be saved.
     """
     try:
-        validated_url = valid_url(url)
-        local_filename = os.path.join(download_dir, os.path.basename(urlparse(validated_url).path))
-        with urllib.request.urlopen(validated_url) as response, open(local_filename, 'wb') as out_file:
+        local_filename = os.path.join(download_dir, os.path.basename(urlparse(url).path))
+        with urllib.request.urlopen(url) as response, open(local_filename, 'wb') as out_file:
             data = response.read()
             out_file.write(data)
-        print(f"INFO: Downloaded {validated_url} to {local_filename}")
+        print(f"INFO: Downloaded {url} to {local_filename}")
     except Exception as e:
-        print(f"ERROR: Failed to download {validated_url}. Reason: {e}")
+        print(f"ERROR: Failed to download {url}. Reason: {e}")
 
 
 def worker_thread(q: 'queue.Queue[Tuple[str, int, str, bool]]',
