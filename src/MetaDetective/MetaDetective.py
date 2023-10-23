@@ -756,14 +756,14 @@ def main():
                                             "  python3 MetaDetective.py -d directory -t all -display singular -format formatted\n"
                                             "  python3 MetaDetective.py -d directory --export\n"
                                             "\n"
-                                            "  python3 MetaDetective.py --scrapper --scan --url https://example.com/\n"
-                                            "  python3 MetaDetective.py --scrapper --download-dir directory --url https://example.com/\n"
-                                            "  python3 MetaDetective.py --scrapper --depth 1 --download-dir directory --url https://example.com/\n",
+                                            "  python3 MetaDetective.py --scraping --scan --url https://example.com/\n"
+                                            "  python3 MetaDetective.py --scraping --download-dir directory --url https://example.com/\n"
+                                            "  python3 MetaDetective.py --scraping --depth 1 --download-dir directory --url https://example.com/\n",
                                      formatter_class=argparse.RawTextHelpFormatter
                                      )
 
-    webscraper_group = parser.add_argument_group('Scrapper options', 'Metadata scrapper options.')
-    webscraper_group.add_argument('-s', '--scrapper', action='store_true', help="Option required to use the scrapper.")
+    webscraper_group = parser.add_argument_group('scraping options', 'Metadata scraping options.')
+    webscraper_group.add_argument('-s', '--scraping', action='store_true', help="Option required to use the scraping.")
     webscraper_group.add_argument('-u', "--url", type=valid_url, help="The URL to scan.")
     webscraper_group.add_argument("--scan", action="store_true", help="Scan and display file statistics without downloading.")
     webscraper_group.add_argument("--depth", type=int, default=0, help="Depth of links to follow.")
@@ -793,20 +793,20 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    if args.scrapper:
+    if args.scraping:
         if args.directory or args.files or args.ignore:
-            print("ERROR: --directory, --files, and --ignore cannot be used with --scrapper.")
+            print("ERROR: --directory, --files, and --ignore cannot be used with --scraping.")
             sys.exit(1)
 
         if not args.url:
-            print("ERROR: --url is required when using --scrapper.")
+            print("ERROR: --url is required when using --scraping.")
             sys.exit(1)
 
         if args.scan and args.download_dir:
-            print("ERROR: Use either --scan or --download-dir with --scrapper, but not both.")
+            print("ERROR: Use either --scan or --download-dir with --scraping, but not both.")
             sys.exit(1)
         elif not args.scan and not args.download_dir:
-            print("ERROR: You must specify either --scan or --download-dir with --scrapper.")
+            print("ERROR: You must specify either --scan or --download-dir with --scraping.")
             sys.exit(1)
 
         base_domain = urlparse(args.url).netloc
@@ -883,7 +883,7 @@ def main():
             display_metadata(args, all_metadata, ignore_patterns)
 
     else:
-        print("ERROR: You must specify either --scrapper or --directory or --files.")
+        print("ERROR: You must specify either --scraping or --directory or --files.")
         sys.exit(1)
 
 
