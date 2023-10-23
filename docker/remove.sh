@@ -20,4 +20,3 @@ if [ ! -z "$IMAGE_EXISTS" ]; then
 else
     echo "No Docker image found: metadetective-image"
 fi
-

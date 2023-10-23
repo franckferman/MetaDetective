@@ -23,4 +23,3 @@ sudo docker run -d --rm --name metadetective-container metadetective-image
 
 echo "Entering container shell..."
 sudo docker exec -it metadetective-container /bin/bash
-
