@@ -47,7 +47,7 @@ If possible, attach screenshots to support your description.
 - **Exiftool**: [e.g. 12.56]
   *Retrieval:* `exiftool -ver`
 
-- **MetaDetective**: [e.g. 1.0.7]
+- **MetaDetective**: [e.g. 1.0.8]
 
 ### Docker (if used)
 

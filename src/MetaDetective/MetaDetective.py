@@ -4,7 +4,7 @@
 
 Created By  : Franck FERMAN @franckferman
 Created Date: 27/08/2023
-Version     : 1.0.7 (24/10/2023)
+Version     : 1.0.8 (24/10/2023)
 """
 
 import argparse
@@ -61,7 +61,7 @@ EXIFTOOL_NOT_INSTALLED = "Error: exiftool is not installed. Please install it to
 EXIFTOOL_EXECUTION_ERROR = "Error: exiftool encountered an error."
 
 NOMINATIM_HOST = "nominatim.openstreetmap.org"
-USER_AGENT = 'MetaDetective/1.0.7'
+USER_AGENT = 'MetaDetective/1.0.8'
 NOMINATIM_ENDPOINT = "/reverse?format=jsonv2&lat={lat}&lon={lon}"
 
 NOMINATIM_LINK = "https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
