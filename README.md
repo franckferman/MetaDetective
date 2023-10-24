@@ -75,7 +75,7 @@ Beyond mere extraction, MetaDetective prides itself on its capability to meticul
 While Metagoofil once leaned on Google searches—a method riddled with IP restrictions and the labyrinth of proxy workarounds—MetaDetective pioneers a path with direct web scraping. By targeting sites directly, it sidesteps disruptions, delivering a dataset that's not just richer, but also more precise, spotlighting potential data leaks.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Screenshot-MetaDetective_Scraping_Demo.png" alt="MetaDetective Demo Screenshot" width="auto" height="auto">
+  <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Screenshot-MetaDetective_Scraping_Demo.png" alt="MetaDetective Scraping Demo Screenshot" width="auto" height="auto">
 </p>
 
 ### 🔍 Complementary Utility for OSINT and Pentesting
@@ -287,6 +287,10 @@ Further, the `--out` or `-o` argument lets you specify the directory path for yo
 | TXT Format Export | Save results in TXT format. | `python3 src/MetaDetective/MetaDetective.py -d directory --export txt` |
 | Custom Filename Suffix | Add a custom suffix to the filename. | `python3 src/MetaDetective/MetaDetective.py -d directory -e --custom Pentest-MD_2` |
 | Specify Output Directory | Define the directory for data export. | `python3 src/MetaDetective/MetaDetective.py -d directory -e -o directory` |
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Screenshot-MetaDetective_HTML_Export_Demo.png" alt="MetaDetective HTML Export Demo Screenshot" width="auto" height="auto">
+</p>
 
 **Note**: The export format can greatly affect data presentation and accessibility. Opt for the format that aligns with your requirements.
 
