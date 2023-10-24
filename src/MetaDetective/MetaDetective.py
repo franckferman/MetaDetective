@@ -947,13 +947,14 @@ def download_file(url: str, download_dir: str) -> None:
         download_dir (str): Directory where the file should be saved.
     """
     try:
-        local_filename = os.path.join(download_dir, os.path.basename(urlparse(url).path))
-        with urllib.request.urlopen(url) as response, open(local_filename, 'wb') as out_file:
+        encoded_url = quote(url, safe=":/?&=")
+        local_filename = os.path.join(download_dir, os.path.basename(urlparse(encoded_url).path))
+        with urllib.request.urlopen(encoded_url) as response, open(local_filename, 'wb') as out_file:
             data = response.read()
             out_file.write(data)
-        print(f"INFO: Downloaded {url} to {local_filename}")
+        print(f"INFO: Downloaded {encoded_url} to {local_filename}")
     except Exception as e:
-        print(f"ERROR: Failed to download {url}. Reason: {e}")
+        print(f"ERROR: Failed to download {encoded_url}. Reason: {e}")
 
 
 def worker_thread(q: queue.Queue[Tuple[str, int, str, bool]],
