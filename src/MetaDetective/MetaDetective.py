@@ -837,13 +837,13 @@ def fetch_links_from_url(url: str) -> List[str]:
         return parser.links
 
     except urllib.error.URLError as e:
-        print(f"ERROR: Unable to open {url}. Reason: {e}")
+        print(f"ERROR: Unable to open {url} Reason: {e}")
         return []
     except urllib.error.HTTPError as e:
-        print(f"HTTP Error for URL {url}. Reason: {e.code} - {e.reason}")
+        print(f"HTTP Error for URL {url} Reason: {e.code} - {e.reason}")
         return []
     except ValueError as e:
-        print(f"ERROR: Unable to decode data from {url}. Reason: {e}")
+        print(f"ERROR: Unable to decode data from {url} Reason: {e}")
         return []
 
 
