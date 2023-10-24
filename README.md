@@ -196,7 +196,7 @@ Use the `--depth` flag to specify how deeply the scraper should navigate through
 python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://aulnay-sous-bois.fr --depth 1
 ```
 
-### **Additional Flags**:
+##### **Additional Flags**:
 
 - **External Link Tracking**: 
 Use `--follow-extern` to allow tracking of external links (those outside the base URL). Typically not advised, but might be useful in certain contexts.
@@ -207,9 +207,9 @@ Use `--threads` to specify the number of threads for concurrent operations.
 - **Rate Limiting**:
 Use `--rate` to control the maximum number of requests per second.
 
-### 🕵️ File analysis & Metadata Analyzer:
+#### 🕵️ File analysis & Metadata Analyzer:
 
-#### **Basic Commands**:
+##### **Basic Commands**:
 
 To begin analyzing files, you'll use either the `-d` or `-f` flag.
 
@@ -269,7 +269,7 @@ Modify your display further with these:
 | Stylish display | `python3 src/MetaDetective/MetaDetective.py --display all --format formatted` |
 | Simpler look | `python3 src/MetaDetective/MetaDetective.py --display all --format concise` |
 
-### 🔎 **Export Options**
+#### 🔎 **Export Options**
 
 MetaDetective provides flexibility in exporting analysis results.
 
