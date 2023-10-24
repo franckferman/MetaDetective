@@ -954,7 +954,7 @@ def download_file(url: str, download_dir: str) -> None:
             out_file.write(data)
         print(f"INFO: Downloaded {encoded_url} to {local_filename}")
     except Exception as e:
-        print(f"ERROR: Failed to download {encoded_url}. Reason: {e}")
+        print(f"ERROR: Failed to download {encoded_url} Reason: {e}")
 
 
 def worker_thread(q: queue.Queue[Tuple[str, int, str, bool]],
