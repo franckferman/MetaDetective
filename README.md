@@ -1,6 +1,6 @@
 <div id="top" align="center">
 
-<!-- Shields -->
+<!-- Shields Header -->
 [![Contributors][contributors-shield]](https://github.com/franckferman/MetaDetective/graphs/contributors)
 [![Forks][forks-shield]](https://github.com/franckferman/MetaDetective/network/members)
 [![Stargazers][stars-shield]](https://github.com/franckferman/MetaDetective/stargazers)
@@ -44,7 +44,7 @@
 <details open>
   <summary><strong>Click to collapse/expand</strong></summary>
   <ol>
-    <li><a href="#about">📖 About</a></li>
+    <li><a href="#-about-metadetective">📖 About</a></li>
     <li><a href="#-installation">🛠️ Installation</a></li>
     <li><a href="#-usage">🎮 Usage</a></li>
     <li><a href="#-troubleshooting">❗ Troubleshooting</a></li>
@@ -54,7 +54,7 @@
   </ol>
 </details>
 
-## About
+## 🕵️‍♂️ About MetaDetective
 
 **MetaDetective:** _Advanced metadata extraction and web scraping._
 
@@ -96,14 +96,14 @@ Before diving into the installation process, ensure you meet the following prere
 
 > ⚠️ **Note**: MetaDetective has been rigorously tested with Python 3.11.4 on Linux alongside exiftool version 12.56. While it may function with other versions, compatibility is guaranteed only with these specific configurations.
 
-### Installation Methods
+### Installation methods
 
-1. **Git Clone the Repository**:
+1. **Git clone the repository**:
 ```bash
 git clone https://github.com/franckferman/MetaDetective.git
 ```
 
-2. **Direct Download**:
+2. **Direct download**:
 To skip cloning and directly download the script (designed for simplicity and flexibility, it doesn't depend on any external packages, so if you only need the script, you can also directly download it):
 ```bash
 curl -O https://raw.githubusercontent.com/franckferman/MetaDetective/stable/src/MetaDetective/MetaDetective.py
@@ -122,7 +122,7 @@ source MetaDetectiveEnv/bin/activate
 pip install MetaDetective
 ```
 
-4. **Docker Integration**:
+4. **Docker integration**:
 
 For a Docker-based setup, refer to our Docker-specific guide: [MetaDetective Docker Setup](https://github.com/franckferman/MetaDetective/blob/stable/docker/README.md).
 
@@ -132,7 +132,7 @@ For a Docker-based setup, refer to our Docker-specific guide: [MetaDetective Doc
 
 Ensure you adapt your command according to how you've set up `MetaDetective`.
 
-### **Getting Started**
+### **Getting started**
 
 Kick off with the built-in help to explore MetaDetective's functionalities:
 
@@ -140,7 +140,7 @@ Kick off with the built-in help to explore MetaDetective's functionalities:
 python3 src/MetaDetective/MetaDetective.py -h
 ```
 
-### **Command Examples**
+### **Command examples**
 
 #### 🕵️ File analysis:
 
@@ -165,30 +165,30 @@ python3 src/MetaDetective/MetaDetective.py -h
 | Download to specified directory | `python3 src/MetaDetective/MetaDetective.py --scraping --download-dir ~ --url https://example.com/` |
 | Download with set depth | `python3 src/MetaDetective/MetaDetective.py --scraping --depth 1 --download-dir ~ --url https://example.com/` |
 
-### **Additional Parameters**
+### **Additional parameters**
 
 #### 🌐 Web Scraping:
 
 To initiate the web scraping mode, use the `--scraping` flag. Remember, this option doesn't function independently. It requires either a scanning or downloading parameter.
 
-- **Activating Web Scraping Mode**: 
+- **Activating web scraping mode**: 
 ```bash
 python3 src/MetaDetective/MetaDetective.py --scraping
 ```
 
-- **Scanning & Displaying Statistics**: 
+- **Scanning and displaying statistics**: 
 Ensure both the URL and `--scan` flags are used.
 ```bash
 python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://example.com
 ```
 
-- **Downloading Web Content**:
+- **Downloading web content**:
 Indicate the desired directory using `--download-dir` and provide the target URL.
 ```bash
 python3 src/MetaDetective/MetaDetective.py --scraping --download-dir ~ --url https://example.com
 ```
 
-- **Adjusting Scraping Depth**:
+- **Adjusting scraping depth**:
 Use the `--depth` flag to specify how deeply the scraper should navigate through links.
 ```bash
 python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://aulnay-sous-bois.fr --depth 1
@@ -196,13 +196,13 @@ python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://aulna
 
 ##### **Additional Flags**:
 
-- **External Link Tracking**: 
+- **External link tracking**: 
 Use `--follow-extern` to allow tracking of external links (those outside the base URL). Typically not advised, but might be useful in certain contexts.
 
-- **Thread Management**: 
+- **Thread management**: 
 Use `--threads` to specify the number of threads for concurrent operations.
 
-- **Rate Limiting**:
+- **Rate limiting**:
 Use `--rate` to control the maximum number of requests per second.
 
 #### 🕵️ File analysis & Metadata Analyzer:
@@ -229,7 +229,7 @@ Analyze the contents of multiple files.
 python3 src/MetaDetective/MetaDetective.py -f examples/MetaDetective-APTX_4869_report.pdf examples/MetaDetective-Kogoro_s_Choice.pdf
 ```
 
-##### **Specifying Data Type**
+##### **Specifying data type**
 
 You can filter to analyze specific file types:
 
@@ -239,7 +239,7 @@ You can filter to analyze specific file types:
 | Add multiple data types | `python3 src/MetaDetective/MetaDetective.py -d directory -t pdf doc` |
 | Include all types | `python3 src/MetaDetective/MetaDetective.py -d directory -t all` |
 
-##### **Ignoring Specific Results**:
+##### **Ignoring specific results**:
 
 If you want to omit specific keywords from the displayed metadata, use the `-i` or `--ignore` flag. For instance, you might want to exclude common usernames like "admin" during the reconnaissance phase of your pentest. Regex patterns are supported, e.g., `^BeginBy`.
 
@@ -249,7 +249,7 @@ If you want to omit specific keywords from the displayed metadata, use the `-i` 
 | Exclude multiple terms | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous admin administrateur` |
 | Regex exclusions | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous ^admin` |
 
-##### **Display Options**
+##### **Display options**
 
 Adapt the display of your results to suit your preferences:
 
@@ -258,7 +258,7 @@ Adapt the display of your results to suit your preferences:
 | Show each file's metadata | `python3 src/MetaDetective/MetaDetective.py --display all` |
 | Singular results without duplicates | `python3 src/MetaDetective/MetaDetective.py --display singular` |
 
-##### **Format Options**
+##### **Format options**
 
 Modify your display further with these:
 
@@ -267,7 +267,7 @@ Modify your display further with these:
 | Stylish display | `python3 src/MetaDetective/MetaDetective.py --display all --format formatted` |
 | Simpler look | `python3 src/MetaDetective/MetaDetective.py --display all --format concise` |
 
-#### 🔎 **Export Options**
+#### 🔎 **Export options**
 
 MetaDetective provides flexibility in exporting analysis results.
 
