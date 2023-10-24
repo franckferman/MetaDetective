@@ -39,8 +39,6 @@
 
 </div>
 
-## Table of Contents
-
 ## 📜 Table of Contents
 
 <details open>
@@ -312,7 +310,7 @@ This project is licensed under the GNU Affero General Public License, Version 3.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
-## Contact
+## 📞 Contact
 
 [![ProtonMail][protonmail-shield]](mailto:contact@franckferman.fr) 
 [![LinkedIn][linkedin-shield]](https://www.linkedin.com/in/franckferman)
