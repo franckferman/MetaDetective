@@ -10,7 +10,6 @@ Version     : 1.0.6 (23/10/2023)
 import argparse
 import datetime
 import http.client
-import io
 import json
 import os
 import queue
@@ -23,8 +22,8 @@ import urllib.request
 from argparse import Namespace
 from collections import defaultdict
 from html.parser import HTMLParser
-from typing import Dict, List, Optional, Set, Tuple
-from urllib.parse import urlparse, urljoin
+from typing import Any, Dict, List, Optional, Set, Tuple
+from urllib.parse import urlparse, urljoin, quote
 
 
 BANNER = r"""
@@ -42,7 +41,6 @@ FIELDS = [
     "Make", "Camera ID", "Camera Type 2", "Serial Number", "Internal Serial Number", "GPS Status", "GPS Altitude",
     "GPS Latitude", "GPS Longitude", "GPS Position", "Formatted GPS Position", "Address", "Map Link"
 ]
-
 UNIQUE_FIELDS = [
     "Creator", "Author", "Last Modified By", "Hyperlinks", "Creator Tool",
     "Producer", "Software", "Camera Model Name", "Image Description", "Make",
@@ -61,6 +59,121 @@ EXTENSIONS = [
 
 EXIFTOOL_NOT_INSTALLED = "Error: exiftool is not installed. Please install it to continue."
 EXIFTOOL_EXECUTION_ERROR = "Error: exiftool encountered an error."
+
+NOMINATIM_HOST = "nominatim.openstreetmap.org"
+USER_AGENT = 'MetaDetective/1.0.6'
+NOMINATIM_ENDPOINT = "/reverse?format=jsonv2&lat={lat}&lon={lon}"
+
+NOMINATIM_LINK = "https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
+
+CSS_STYLE = """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+    body {
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+        color: #EAEAEA;
+        padding: 20px;
+        margin: 0;
+        background: linear-gradient(120deg, #121212, #1E1E1E, #121212);
+        background-size: 300% 300%;
+        animation: gradientBG 15s ease infinite;
+    }
+
+    @keyframes gradientBG {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    .header {
+        background-color: rgba(51, 51, 51, 0.8);
+        color: white;
+        padding: 10px 0;
+        text-align: center;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        text-shadow: 2px 2px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .metadata-entry {
+        background-color: rgba(30, 30, 30, 0.8);
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: fadeInUp 0.5s forwards 0.2s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .metadata-entry:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.8);
+        transform: scale(1.02);
+    }
+
+    p {
+        margin: 5px 0;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+    }
+
+    strong {
+        color: #EAEAEA;
+    }
+
+    h3 {
+        color: #BBB;
+        border-bottom: 1px solid #444;
+        padding-bottom: 10px;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+    }
+
+    hr {
+        border: 0;
+        border-top: 1px solid #333;
+        margin-top: 10px;
+    }
+
+    a {
+        transition: all 0.3s;
+    }
+
+    a:link, a:visited {
+        color: #BBB;
+        text-decoration: none;
+    }
+
+    a:hover {
+        color: #FFF;
+        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
+        text-decoration: underline;
+    }
+
+    a:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+    }
+    </style>
+"""
+
+NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/ui/search.html?q="
+
+SENTINEL = None
 
 
 def show_banner() -> None:
@@ -91,7 +204,18 @@ def dms_to_dd(degrees: int, minutes: int, seconds: float, direction: str) -> flo
 
     Returns:
         float: Coordinate in Decimal Degrees format.
+
+    Raises:
+        ValueError: If direction is not one of 'N', 'S', 'E', 'W' or
+                    if degrees, minutes or seconds are out of valid range.
     """
+    if not (0 <= degrees < 180) or not (0 <= minutes < 60) or not (0 <= seconds < 60):
+        raise ValueError("Invalid DMS values provided.")
+
+    direction = direction.upper()
+    if direction not in ['N', 'S', 'E', 'W']:
+        raise ValueError("Invalid direction. Expected one of ['N', 'S', 'E', 'W'].")
+
     dd = float(degrees) + float(minutes) / 60 + float(seconds) / 3600
     if direction in ['S', 'W']:
         dd *= -1
@@ -109,12 +233,21 @@ def parse_dms(dms_str: str) -> Optional[Tuple[int, int, float, str]]:
         Optional[Tuple[int, int, float, str]]:
         Components (degrees, minutes, seconds, direction)
         of the DMS if parsed successfully, otherwise None.
+
+    Raises:
+        ValueError: If direction is not one of 'N', 'S', 'E', 'W' or
+                    if the input string does not match the DMS pattern.
     """
-    match = re.search(r"(\d+) deg (\d+)' ([\d.]+)\" (\w)", dms_str)
+    match = re.search(r"(\d+)\s*deg\s*(\d+)'\s*([\d.]+)\"\s*(\w)", dms_str)
     if match:
         deg, min, sec, dir = match.groups()
-        return int(deg), int(min), float(sec), dir
-    return None
+
+        if dir.upper() not in ['N', 'S', 'E', 'W']:
+            raise ValueError(f"Invalid direction: {dir}")
+
+        return int(deg), int(min), float(sec), dir.upper()
+
+    raise ValueError(f"Invalid DMS format: {dms_str}")
 
 
 def get_metadata(file_path: str, fields: List[str]) -> dict:
@@ -127,17 +260,28 @@ def get_metadata(file_path: str, fields: List[str]) -> dict:
 
     Returns:
         dict: Dictionary containing the extracted metadata.
+
+    Raises:
+        subprocess.CalledProcessError: If there's an error executing exiftool.
     """
-    exiftool_output = subprocess.run(["exiftool", file_path], capture_output=True, text=True)
+    try:
+        exiftool_output = subprocess.run(["exiftool", file_path], capture_output=True, text=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing exiftool: {e}")
+        return {}
+
+    field_set = set(fields)
     metadata = {}
 
     for line in exiftool_output.stdout.splitlines():
-        for field in fields:
-            if field in line:
-                key, value = line.split(":", 1)
-                if value.strip():
-                    metadata[key.strip()] = value.strip()
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip()
+        if key in field_set and value.strip():
+            metadata[key] = value.strip()
 
+    lat_dd, lon_dd = None, None
     gps_position = metadata.get("GPS Position", None)
     if gps_position:
         lat_str, lon_str = gps_position.split(", ")
@@ -149,8 +293,6 @@ def get_metadata(file_path: str, fields: List[str]) -> dict:
         if gps_lat and gps_lon:
             lat_dd = dms_to_dd(*parse_dms(gps_lat))
             lon_dd = dms_to_dd(*parse_dms(gps_lon))
-        else:
-            lat_dd, lon_dd = None, None
 
     if lat_dd is not None and lon_dd is not None:
         metadata["Formatted GPS Position"] = f"{lat_dd:.6f}, {lon_dd:.6f}"
@@ -168,8 +310,58 @@ def matches_any_pattern(value: str, patterns: List[str]) -> bool:
 
     Returns:
         bool: True if the value matches any of the patterns, False otherwise.
+
+    Raises:
+        re.error: If one of the patterns is not a valid regular expression.
     """
-    return any(re.search(pattern, value, re.IGNORECASE) for pattern in patterns)
+    compiled_patterns = [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
+    return any(pattern.search(value) for pattern in compiled_patterns)
+
+
+def valid_directory(path: str) -> str:
+    """
+    Validate directory path.
+
+    Args:
+        path (str): The directory path to validate.
+
+    Returns:
+        str: The valid directory path.
+
+    Raises:
+        argparse.ArgumentTypeError: If the directory path is invalid or doesn't exist.
+    """
+    if not os.path.exists(path):
+        raise argparse.ArgumentTypeError(f"Directory path '{path}' does not exist.")
+
+    if not os.path.isdir(path):
+        raise argparse.ArgumentTypeError(f"Path '{path}' is not a directory.")
+
+    return path
+
+
+def filter_files_by_extension(files: List[str], extensions: List[str]) -> List[str]:
+    """
+    Filter a list of files to return only those that match the provided extensions.
+
+    Args:
+        files (List[str]): The list of file paths to filter.
+        extensions (List[str]): A list of file extensions to filter by.
+
+    Returns:
+        List[str]: A filtered list of file paths with only the specified extensions.
+
+    Raises:
+        TypeError: If the inputs are not lists or if the elements within those lists are not strings.
+    """
+    if not isinstance(files, list) or not all(isinstance(f, str) for f in files):
+        raise TypeError("The 'files' argument must be a list of strings.")
+
+    if not isinstance(extensions, list) or not all(isinstance(ext, str) for ext in extensions):
+        raise TypeError("The 'extensions' argument must be a list of strings.")
+
+    ext_set = set(extensions)
+    return [file for file in files if file.endswith(tuple(ext_set))]
 
 
 def get_files(args) -> List[str]:
@@ -181,19 +373,25 @@ def get_files(args) -> List[str]:
 
     Returns:
         List[str]: List of file paths.
+
+    Raises:
+        ValueError: If provided directory path is not an actual directory or no files are found.
     """
     if args.directory:
-        if not os.path.isdir(args.directory):
-            sys.exit(f"Error: {args.directory} is not a directory.")
+        try:
+            valid_directory(args.directory)
+        except argparse.ArgumentTypeError as e:
+            raise ValueError(str(e))
 
         files = [os.path.join(args.directory, file) for file in os.listdir(args.directory)]
         if args.type != ['all']:
-            files = [file for file in files if any(file.endswith(ext) for ext in args.type)]
+            files = filter_files_by_extension(files, args.type)
     else:
         files = args.files
 
     if not files:
-        sys.exit("Error: No files found.")
+        raise ValueError("Error: No files found.")
+
     return files
 
 
@@ -207,92 +405,183 @@ def get_address_from_coords(lat: str, lon: str) -> str:
 
     Returns:
         str: Address as a string. Returns an empty string if there's an error or nothing found.
+
+    Raises:
+        http.client.HTTPException: If an HTTP error occurs.
+        json.JSONDecodeError: If there's an error decoding the JSON response.
+        Exception: For any other unexpected errors.
     """
     try:
-        conn = http.client.HTTPSConnection("nominatim.openstreetmap.org")
-        headers = {'User-Agent': 'MetaDetective/1.0.6'}
-        conn.request("GET", f"/reverse?format=jsonv2&lat={lat}&lon={lon}", headers=headers)
+        conn = http.client.HTTPSConnection(NOMINATIM_HOST)
+        headers = {'User-Agent': USER_AGENT}
+        conn.request("GET", NOMINATIM_ENDPOINT.format(lat=lat, lon=lon), headers=headers)
 
         res = conn.getresponse()
         data = res.read()
 
         parsed_data = json.loads(data.decode("utf-8"))
-        address = parsed_data.get("display_name", "")
+        return parsed_data.get("display_name", "")
 
-        return address
+    except http.client.HTTPException as e:
+        print(f"HTTP error occurred: {e}")
+        raise
+    except json.JSONDecodeError:
+        print("Error decoding JSON response.")
+        raise
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        raise
 
-    except Exception:
-        return ""
 
-
-def display_metadata(args: Namespace, all_metadata: List[Dict[str, str]], ignore_patterns: List[str]) -> None:
+def format_gps_data(metadata: Dict[str, str]) -> None:
     """
-    Display metadata based on the provided arguments.
+    Update the provided metadata dictionary with address and map link
+    derived from the "Formatted GPS Position", if present.
+
+    This function modifies the metadata dictionary in-place to add or update
+    the "Address" and "Map Link" fields.
 
     Args:
-        args (Namespace): The parsed command-line arguments.
-        all_metadata (List[Dict[str, str]]): List of dictionaries containing metadata.
-        ignore_patterns (List[str]): List of patterns to ignore.
+        metadata (Dict[str, str]): The metadata dictionary containing potential
+                                   GPS data under the key "Formatted GPS Position".
 
     Returns:
-        None
+        None: The function returns nothing but modifies the given dictionary in-place.
+
+    Raises:
+        Exception: If there's an issue fetching the address from the coordinates.
+        ValueError: If the "Formatted GPS Position" data is not in the expected format.
+    """
+    formatted_gps = metadata.get("Formatted GPS Position")
+    if not formatted_gps:
+        return
+
+    try:
+        lat, lon = formatted_gps.split(", ")
+    except ValueError:
+        raise ValueError("The 'Formatted GPS Position' data is not in the expected 'lat, lon' format.")
+
+    address = get_address_from_coords(lat, lon)
+    if address:
+        metadata["Address"] = address
+
+    metadata["Map Link"] = NOMINATIM_LINK.format(lat=lat, lon=lon)
+
+
+def display_all_metadata(all_metadata: List[Dict[str, Any]], ignore_patterns: List[str]) -> None:
+    """
+    Display all metadata fields for each metadata entry, excluding fields that match ignore patterns.
+
+    The function will also format GPS data, add address and map link information if available,
+    and print each field-value pair for each metadata entry. If there are no relevant fields for
+    a particular metadata entry, it will indicate so.
+
+    Args:
+        all_metadata (List[Dict[str, Any]]): List of metadata dictionaries to display.
+        ignore_patterns (List[str]): Patterns to use for excluding fields from being displayed.
+
+    Returns:
+        None: The function prints to stdout and does not return a value.
+
+    Raises:
+        ValueError: If the GPS data in any metadata entry is not in the expected format.
+        Exception: If there's an issue fetching the address from the coordinates for any metadata entry.
+    """
+    for metadata in all_metadata:
+        format_gps_data(metadata)
+
+        displayed_fields = 0
+        for field, value in metadata.items():
+            if field in FIELDS and value and not matches_any_pattern(value, ignore_patterns):
+                print(f"{field}: {value}")
+                displayed_fields += 1
+
+        if displayed_fields == 1:
+            print("No relevant metadata found.")
+        print("-" * 40)
+
+
+def display_singular_metadata(all_metadata: List[Dict[str, Any]],
+                              args: Namespace,
+                              ignore_patterns: List[str]) -> None:
+    """
+    Display unique metadata fields from a list of metadata entries based on user's display preference.
+
+    The function processes and aggregates unique metadata fields and values from a list of
+    metadata entries. It will format GPS data for each entry, consider fields in the UNIQUE_FIELDS
+    list and display the resulting unique values according to the user's display preference (formatted or not).
+
+    Args:
+        all_metadata (List[Dict[str, Any]]): List of metadata dictionaries to process.
+        args (Namespace): User arguments, including display format preference.
+        ignore_patterns (List[str]): Patterns to use for excluding metadata fields from being displayed.
+
+    Returns:
+        None: The function prints to stdout and does not return a value.
+
+    Raises:
+        ValueError: If the GPS data in any metadata entry is not in the expected format.
+        Exception: If there's an issue fetching the address from the coordinates for any metadata entry.
+    """
+    unique_values = defaultdict(set)
+
+    for metadata in all_metadata:
+        format_gps_data(metadata)
+        for field in UNIQUE_FIELDS:
+            value = metadata.get(field, None)
+            if field == "Hyperlinks" and value:
+                links = [link.strip() for link in value.split(',')]
+                valid_links = [link for link in links if not matches_any_pattern(link, ignore_patterns)]
+                if valid_links:
+                    unique_values[field].add(', '.join(valid_links))
+            elif value and not matches_any_pattern(value, ignore_patterns):
+                unique_values[field].add(value)
+
+    for field, values in unique_values.items():
+        unique_cased_values = {next(v for v in values if v.lower() == value.lower()): None for value in values}.keys()
+        if unique_cased_values:
+            if args.format == 'formatted':
+                print(f"{field}:")
+                for unique_value in unique_cased_values:
+                    print(f"    - {unique_value}")
+            else:
+                print(f"{field}: {', '.join(unique_cased_values)}")
+            print()
+
+
+def display_metadata(args: Namespace,
+                     all_metadata: List[Dict[str, Any]],
+                     ignore_patterns: List[str]) -> None:
+    """
+    Display metadata based on user's display preference.
+
+    Depending on the user's preference indicated in the 'args',
+    this function delegates the metadata display to either
+    'display_all_metadata' or 'display_singular_metadata' function.
+
+    Args:
+        args (Namespace): User arguments indicating the display preference ('all' or 'singular').
+        all_metadata (List[Dict[str, Any]]): List of metadata dictionaries to process.
+        ignore_patterns (List[str]): Patterns to use for excluding metadata fields from being displayed.
+
+    Returns:
+        None: The function prints to stdout and does not return a value.
+
+    Raises:
+        ValueError: If an unrecognized display preference is provided in 'args'.
+        Exception: If there's an issue in the subordinate functions it delegates to.
     """
     if args.display == "all":
-        for metadata in all_metadata:
-            formatted_gps = metadata.get("Formatted GPS Position")
-            if formatted_gps:
-                lat, lon = formatted_gps.split(", ")
-                address = get_address_from_coords(lat, lon)
-                if address:
-                    metadata["Address"] = address
-                metadata["Map Link"] = f"https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
-
-            displayed_fields = 0
-
-            for field, value in metadata.items():
-                if field in FIELDS and value and not matches_any_pattern(value, ignore_patterns):
-                    print(f"{field}: {value}")
-                    displayed_fields += 1
-            if displayed_fields == 1:
-                print("No relevant metadata found.")
-            print("-" * 40)
-
+        display_all_metadata(all_metadata, ignore_patterns)
     elif args.display == "singular":
-        unique_values = defaultdict(set)
-
-        for metadata in all_metadata:
-            formatted_gps = metadata.get("Formatted GPS Position")
-            if formatted_gps:
-                lat, lon = formatted_gps.split(", ")
-                map_link = f"https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
-                if map_link:
-                    metadata["Map Link"] = map_link
-
-            for field in UNIQUE_FIELDS:
-                value = metadata.get(field, None)
-                if field == "Hyperlinks" and value:
-                    links = [link.strip() for link in value.split(',')]
-                    valid_links = [link for link in links if not matches_any_pattern(link, ignore_patterns)]
-                    if valid_links:
-                        unique_values[field].add(', '.join(valid_links))
-                elif value and not matches_any_pattern(value, ignore_patterns):
-                    unique_values[field].add(value)
-
-        for field, values in unique_values.items():
-            unique_cased_values = {next(v for v in values if v.lower() == value.lower()): None for value in values}.keys()
-            if unique_cased_values:
-                if args.format == 'formatted':
-                    print(f"{field}:")
-                    for unique_value in unique_cased_values:
-                        print(f"    - {unique_value}")
-                else:
-                    print(f"{field}: {', '.join(unique_cased_values)}")
-                print()
+        display_singular_metadata(all_metadata, args, ignore_patterns)
+    else:
+        raise ValueError(f"Unrecognized display preference: {args.display}")
 
 
 def export_metadata_to_html(args: Namespace, all_metadata: List[Dict[str, str]], ignore_patterns: List[str]) -> str:
     """
-    Convert metadata to HTML format based on the provided arguments.
+    Convert and export metadata to a beautiful HTML page based on the provided arguments.
 
     Args:
         args (Namespace): The parsed command-line arguments.
@@ -302,68 +591,17 @@ def export_metadata_to_html(args: Namespace, all_metadata: List[Dict[str, str]],
     Returns:
         str: HTML representation of the metadata.
     """
-    html_parts = ['''<html>
-<head>
-    <title>MetaDetective Export</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #EAEAEA;
-            padding: 20px;
-            margin: 0;
-        }
-        .header {
-            background-color: #333;
-            color: white;
-            padding: 10px 0;
-            text-align: center;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .metadata-entry {
-            background-color: #1E1E1E;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-        }
-        p {
-            margin: 5px 0;
-        }
-        strong {
-            color: #EAEAEA;
-        }
-        h3 {
-            color: #BBB;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-        }
-        hr {
-            border: 0;
-            border-top: 1px solid #333;
-            margin-top: 10px;
-        }
-        a:link {
-            color: #BBB;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        a:visited {
-            color: #888;
-            text-decoration: none;
-        }
-        a:hover {
-            color: #FFF;
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>MetaDetective Export Report</h1>
-    </div>
-''']
+    html_parts = [
+        '<html>'
+        '<head>',
+        '<title>MetaDetective Export</title>',
+        CSS_STYLE,
+        '</head>',
+        '<body>',
+        '<div class="header">',
+        '<h1>MetaDetective Export Report</h1>',
+        '</div>'
+    ]
 
     if args.display == "all":
         for metadata in all_metadata:
@@ -374,8 +612,10 @@ def export_metadata_to_html(args: Namespace, all_metadata: List[Dict[str, str]],
                 lat, lon = formatted_gps.split(", ")
                 address = get_address_from_coords(lat, lon)
                 if address:
-                    metadata["Address"] = address
-                metadata["Map Link"] = f"<a href='https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}'>View on Map</a>"
+                    encoded_address = quote(address)
+                    link_to_address = f"{NOMINATIM_SEARCH_URL}{encoded_address}"
+                    metadata["Address"] = f"<a href='{link_to_address}' target='_blank' rel='noopener noreferrer'>{address}</a>"
+                metadata["Map Link"] = f"<a href='https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}' target='_blank' rel='noopener noreferrer'>View on Map</a>"
 
             displayed_fields = 0
             for field, value in metadata.items():
@@ -422,76 +662,95 @@ def export_metadata_to_html(args: Namespace, all_metadata: List[Dict[str, str]],
     return ''.join(html_parts)
 
 
-def export_metadata_to_txt(args: Namespace, all_metadata: List[Dict[str, str]], ignore_patterns: List[str]) -> str:
+def generate_all_metadata_txt(all_metadata: List[Dict[str, Any]], ignore_patterns: List[str]) -> List[str]:
     """
-    Convert metadata to a text string based on the provided arguments.
+    Generate a list of text strings representing the complete metadata for each entry.
 
     Args:
-        args (Namespace): The parsed command-line arguments.
-        all_metadata (List[Dict[str, str]]): List of dictionaries containing metadata.
-        ignore_patterns (List[str]): List of patterns to ignore.
+        all_metadata (List[Dict[str, Any]]): A list of metadata entries to process.
+        ignore_patterns (List[str]): A list of patterns to ignore during generation.
 
     Returns:
-        str: The formatted metadata as a string.
+        List[str]: A list of text strings, each representing a metadata entry.
     """
-    output = io.StringIO()
+    text_parts = []
+    for metadata in all_metadata:
+        format_gps_data(metadata)
 
-    def print_to_buffer(*args, **kwargs):
-        print(*args, file=output, **kwargs)
+        displayed_fields = 0
+        for field, value in metadata.items():
+            if field in FIELDS and value and not matches_any_pattern(value, ignore_patterns):
+                text_parts.append(f"{field}: {value}")
+                displayed_fields += 1
 
+        if displayed_fields == 1:
+            text_parts.append("No relevant metadata found.")
+        text_parts.append("-" * 40)
+
+    return text_parts
+
+
+def generate_singular_metadata_txt(all_metadata: List[Dict[str, Any]],
+                                   args: Namespace,
+                                   ignore_patterns: List[str]) -> List[str]:
+    """
+    Generate a list of text strings representing unique metadata values from the provided entries.
+
+    Args:
+        all_metadata (List[Dict[str, Any]]): A list of metadata entries to process.
+        args (Namespace): Arguments specifying the desired format and other options.
+        ignore_patterns (List[str]): A list of patterns to ignore during generation.
+
+    Returns:
+        List[str]: A list of text strings, each representing a unique metadata value.
+    """
+    text_parts = []
+    unique_values = defaultdict(set)
+
+    for metadata in all_metadata:
+        format_gps_data(metadata)
+        for field in UNIQUE_FIELDS:
+            value = metadata.get(field, None)
+            if field == "Hyperlinks" and value:
+                links = [link.strip() for link in value.split(',')]
+                valid_links = [link for link in links if not matches_any_pattern(link, ignore_patterns)]
+                if valid_links:
+                    unique_values[field].add(', '.join(valid_links))
+            elif value and not matches_any_pattern(value, ignore_patterns):
+                unique_values[field].add(value)
+
+    for field, values in unique_values.items():
+        unique_cased_values = {next(v for v in values if v.lower() == value.lower()): None for value in values}.keys()
+        if unique_cased_values:
+            if args.format == 'formatted':
+                text_parts.append(f"{field}:")
+                for unique_value in unique_cased_values:
+                    text_parts.append(f"    - {unique_value}")
+            else:
+                text_parts.append(f"{field}: {', '.join(unique_cased_values)}")
+            text_parts.append("")
+
+    return text_parts
+
+
+def export_metadata_to_txt(args: Namespace, all_metadata: List[Dict[str, Any]], ignore_patterns: List[str]) -> str:
+    """
+    Export the provided metadata to a text format based on the specified arguments.
+
+    Args:
+        args (Namespace): Arguments specifying the display method and other options.
+        all_metadata (List[Dict[str, Any]]): A list of metadata entries to export.
+        ignore_patterns (List[str]): A list of patterns to ignore during the export.
+
+    Returns:
+        str: Text representation of the metadata, formatted for export.
+    """
     if args.display == "all":
-        for metadata in all_metadata:
-            formatted_gps = metadata.get("Formatted GPS Position")
-            if formatted_gps:
-                lat, lon = formatted_gps.split(", ")
-                address = get_address_from_coords(lat, lon)
-                if address:
-                    metadata["Address"] = address
-                metadata["Map Link"] = f"https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
-
-            displayed_fields = 0
-
-            for field, value in metadata.items():
-                if field in FIELDS and value and not matches_any_pattern(value, ignore_patterns):
-                    print_to_buffer(f"{field}: {value}")
-                    displayed_fields += 1
-            if displayed_fields == 1:
-                print_to_buffer("No relevant metadata found.")
-            print_to_buffer("-" * 40)
-
+        text_parts = generate_all_metadata_txt(all_metadata, ignore_patterns)
     elif args.display == "singular":
-        unique_values = defaultdict(set)
+        text_parts = generate_singular_metadata_txt(all_metadata, args, ignore_patterns)
 
-        for metadata in all_metadata:
-            formatted_gps = metadata.get("Formatted GPS Position")
-            if formatted_gps:
-                lat, lon = formatted_gps.split(", ")
-                map_link = f"https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
-                if map_link:
-                    metadata["Map Link"] = map_link
-
-            for field in UNIQUE_FIELDS:
-                value = metadata.get(field, None)
-                if field == "Hyperlinks" and value:
-                    links = [link.strip() for link in value.split(',')]
-                    valid_links = [link for link in links if not matches_any_pattern(link, ignore_patterns)]
-                    if valid_links:
-                        unique_values[field].add(', '.join(valid_links))
-                elif value and not matches_any_pattern(value, ignore_patterns):
-                    unique_values[field].add(value)
-
-        for field, values in unique_values.items():
-            unique_cased_values = {next(v for v in values if v.lower() == value.lower()): None for value in values}.keys()
-            if unique_cased_values:
-                if args.format == 'formatted':
-                    print_to_buffer(f"{field}:")
-                    for unique_value in unique_cased_values:
-                        print_to_buffer(f"    - {unique_value}")
-                else:
-                    print_to_buffer(f"{field}: {', '.join(unique_cased_values)}")
-                print_to_buffer()
-
-    return output.getvalue()
+    return '\n'.join(text_parts)
 
 
 def valid_filename(value: str) -> str:
@@ -507,42 +766,16 @@ def valid_filename(value: str) -> str:
     Raises:
         argparse.ArgumentTypeError: If the filename suffix is invalid.
     """
-    if not value:
-        raise argparse.ArgumentTypeError("Filename suffix is empty.")
 
-    if len(value) > 16:
-        raise argparse.ArgumentTypeError("Filename suffix is longer than 16 characters.")
+    if not value or len(value) > 16:
+        raise argparse.ArgumentTypeError("Filename suffix must be non-empty and less than 16 characters.")
 
-    if not value[-1].isalnum():
-        raise argparse.ArgumentTypeError("Filename suffix ends with an invalid character.")
+    pattern = r'^[a-zA-Z0-9_-]*[a-zA-Z0-9]$'
 
-    for char in value:
-        if not char.isalnum() and char not in ['-', '_']:
-            raise argparse.ArgumentTypeError(f"Invalid character '{char}' in filename suffix.")
+    if not re.match(pattern, value):
+        raise argparse.ArgumentTypeError("Invalid filename suffix. It should be alphanumeric, can contain '-' or '_', but not end with them.")
 
     return value
-
-
-def valid_directory(path: str) -> str:
-    """
-    Validate directory path.
-
-    Args:
-        path (str): The directory path to validate.
-
-    Returns:
-        str: The valid directory path.
-
-    Raises:
-        argparse.ArgumentTypeError: If the directory path is invalid or doesn't exist.
-    """
-    if not os.path.exists(path):
-        raise argparse.ArgumentTypeError(f"Directory path '{path}' does not exist.")
-
-    if not os.path.isdir(path):
-        raise argparse.ArgumentTypeError(f"Path '{path}' is not a directory.")
-
-    return path
 
 
 class LinkParser(HTMLParser):
@@ -560,38 +793,63 @@ class LinkParser(HTMLParser):
             tag (str): The tag name of the HTML element.
             attrs (List[Tuple[str, str]]): List of attribute name and value pairs.
         """
-        if tag == "a":
+        tag_to_attr = {
+            'a': 'href',
+            'img': 'src',
+            'script': 'src',
+            'link': 'href'
+        }
+
+        target_attr = tag_to_attr.get(tag)
+        if target_attr:
             for name, value in attrs:
-                if name == "href":
-                    self.links.append(value)
-        if tag in ["img", "script", "link"]:
-            for name, value in attrs:
-                if name == "src" or (tag == "link" and name == "href"):
+                if name == target_attr:
                     self.links.append(value)
 
 
 def fetch_links_from_url(url: str) -> List[str]:
-    """Fetch all links from a given URL.
+    """
+    Fetch all links from a given URL.
 
     Args:
         url (str): The URL to fetch links from.
 
     Returns:
         List[str]: List of links found on the page.
+
+    Raises:
+        urllib.error.URLError: If there's an issue with opening the URL.
+        ValueError: If there's an issue with decoding the response data.
     """
+    if url.startswith("javascript:"):
+        return []
+
     try:
         response = urllib.request.urlopen(url)
+
+        content_type = response.headers.get('Content-Type', '').split(';')[0]
+        if 'text' not in content_type:
+            return []
+
         data = response.read().decode()
         parser = LinkParser()
         parser.feed(data)
         return parser.links
-    except Exception as e:
-        print(f"ERROR: Unable to fetch data from {url}. Reason: {e}")
+
+    except urllib.error.URLError as e:
+        print(f"ERROR: Unable to open {url}. Reason: {e}")
+        return []
+    except urllib.error.HTTPError as e:
+        print(f"HTTP Error for URL {url}. Reason: {e.code} - {e.reason}")
+        return []
+    except ValueError as e:
+        print(f"ERROR: Unable to decode data from {url}. Reason: {e}")
         return []
 
 
 def is_valid_file_link(link: str) -> bool:
-    """Check if the link is a valid file link based on its extension.
+    """
+    Check if the link is a valid file link based on its extension.
 
     Args:
         link (str): The link to check.
@@ -599,14 +857,16 @@ def is_valid_file_link(link: str) -> bool:
     Returns:
         bool: True if valid, False otherwise.
     """
-    return any(link.endswith(f".{ext}") for ext in EXTENSIONS)
+    path = urllib.parse.urlsplit(link).path
+    return any(path.endswith(f".{ext}") for ext in EXTENSIONS)
 
 
 def process_url(url: str, depth: int, base_domain: str, q, seen: Set[str],
                 lock: threading.Lock, rate_limiter, file_stats: Dict[str, int],
                 download_dir: Optional[str] = None, scan: bool = False,
                 follow_extern: bool = False) -> None:
-    """Process a URL, fetch its links, and perform download or scanning actions.
+    """
+    Process a URL, fetch its links, and perform download or scanning actions.
 
     Args:
         url (str): The URL to process.
@@ -662,7 +922,7 @@ class RateLimiter:
         """
         Initialize a RateLimiter instance.
 
-        :param rate: Number of allowed function calls per second.
+        rate (float): Number of allowed function calls per second.
         """
         self.rate = rate
         self.last_call = 0.0
@@ -679,7 +939,8 @@ class RateLimiter:
 
 
 def download_file(url: str, download_dir: str) -> None:
-    """Download a file from a given URL and save it to a specified directory.
+    """
+    Download a file from a given URL and save it to a specified directory.
 
     Args:
         url (str): URL of the file to be downloaded.
@@ -695,7 +956,7 @@ def download_file(url: str, download_dir: str) -> None:
         print(f"ERROR: Failed to download {url}. Reason: {e}")
 
 
-def worker_thread(q: 'queue.Queue[Tuple[str, int, str, bool]]',
+def worker_thread(q: queue.Queue[Tuple[str, int, str, bool]],
                   seen: Set[str],
                   lock: threading.Lock,
                   rate_limiter: RateLimiter,
@@ -715,18 +976,56 @@ def worker_thread(q: 'queue.Queue[Tuple[str, int, str, bool]]',
         scan: Indicates whether the tool is in scan mode or not.
     """
     while True:
-        task = q.get()
-        if task is None:
+        task = get_task_from_queue(q)
+        if task is SENTINEL:
             break
 
-        url, depth, base_domain, follow_extern = task
-        process_url(url, depth, base_domain, q, seen, lock, rate_limiter, file_stats, download_dir, scan, follow_extern)
+        process_task(task, q, seen, lock, rate_limiter, file_stats, download_dir, scan)
 
         q.task_done()
 
 
+def get_task_from_queue(q: queue.Queue[Tuple[str, int, str, bool]]) -> Tuple[str, int, str, bool]:
+    """
+    Fetches the next task from the provided queue.
+
+    Args:
+        q (queue.Queue): The queue from which to fetch the next task.
+
+    Returns:
+        Tuple[str, int, str, bool]: The next task in the form of (URL, depth, base_domain, follow_external_links).
+    """
+    return q.get()
+
+
+def process_task(task: Tuple[str, int, str, bool],
+                 q: queue.Queue[Tuple[str, int, str, bool]],
+                 seen: Set[str],
+                 lock: threading.Lock,
+                 rate_limiter: RateLimiter,
+                 file_stats: Dict[str, int],
+                 download_dir: Optional[str] = None,
+                 scan: bool = False) -> None:
+    """
+    Processes a given task by extracting the relevant information and invoking the appropriate URL processing function.
+
+    Args:
+        task (Tuple[str, int, str, bool]): A tuple containing the URL to process, the depth of crawling, the base domain, and a flag to follow external links.
+        q (queue.Queue): The queue from which tasks are fetched and to which new tasks can be added.
+        seen (Set[str]): A set containing URLs that have already been processed to avoid duplication.
+        lock (threading.Lock): A lock object to ensure thread-safe operations.
+        rate_limiter (RateLimiter): An object to control the rate of URL processing.
+        file_stats (Dict[str, int]): A dictionary to track various statistics related to file processing.
+        download_dir (Optional[str], optional): The directory where the files should be saved. If None, no files are saved. Defaults to None.
+        scan (bool, optional): A flag indicating if the tool is in scan mode. If True, URLs are only scanned and not downloaded. Defaults to False.
+    """
+    url, depth, base_domain, follow_extern = task
+    process_url(url, depth, base_domain, q, seen, lock, rate_limiter, file_stats, download_dir, scan, follow_extern)
+
+
 def valid_url(url: str) -> str:
-    """Validates if the provided value is a valid URL.
+    """
+    Validates if the provided value is a valid URL.
 
     Args:
         url (str): The string to validate.
@@ -750,42 +1049,53 @@ def main():
     check_exiftool_installed()
 
     parser = argparse.ArgumentParser(description="Retrieve and display metadata from files using exiftool.",
-                                     epilog="Example commands:\n"
-                                            "  python3 MetaDetective.py -d directory\n"
-                                            "  python3 MetaDetective.py -d directory -i ^admin anonymous -t doc pdf\n"
-                                            "  python3 MetaDetective.py -d directory -t all -display singular -format formatted\n"
-                                            "  python3 MetaDetective.py -d directory --export\n"
+                                     epilog="Example commands:\n\n"
+                                            "# Analysis:\n"
+                                            "   # Analyze metadata in a specified directory:\n"
+                                            "python3 MetaDetective.py -d path/to/directory\n"
+                                            "   # Analyze specific file types in a directory and ignore certain patterns:\n"
+                                            "python3 MetaDetective.py -d directory -i ^admin anonymous -t doc pdf\n"
+                                            "   # Analyze all file types in a directory with formatted display:\n"
+                                            "python3 MetaDetective.py -d directory -t all -display singular -format formatted\n"
                                             "\n"
-                                            "  python3 MetaDetective.py --scraping --scan --url https://example.com/\n"
-                                            "  python3 MetaDetective.py --scraping --download-dir directory --url https://example.com/\n"
-                                            "  python3 MetaDetective.py --scraping --depth 1 --download-dir directory --url https://example.com/\n",
+                                            "   # Export metadata analysis of a directory and exports data (by default in HTML format):\n"
+                                            "python3 MetaDetective.py -d directory --export\n"
+                                            "\n"
+                                            "# Scraping:\n"
+                                            "   # Scan a website without downloading files:\n"
+                                            "python3 MetaDetective.py --scraping --scan --url https://example.com/\n"
+                                            "   # Download files from a website to a specified directory:\n"
+                                            "python3 MetaDetective.py --scraping --download-dir directory --url https://example.com/\n"
+                                            "   # Download files from a website with specified depth:\n"
+                                            "python3 MetaDetective.py --scraping --depth 1 --download-dir directory --url https://example.com/\n",
                                      formatter_class=argparse.RawTextHelpFormatter
                                      )
 
-    webscraper_group = parser.add_argument_group('scraping options', 'Metadata scraping options.')
-    webscraper_group.add_argument('-s', '--scraping', action='store_true', help="Option required to use the scraping.")
-    webscraper_group.add_argument('-u', "--url", type=valid_url, help="The URL to scan.")
-    webscraper_group.add_argument("--scan", action="store_true", help="Scan and display file statistics without downloading.")
-    webscraper_group.add_argument("--depth", type=int, default=0, help="Depth of links to follow.")
-    webscraper_group.add_argument("--download-dir", type=valid_directory, help="Directory to save downloaded files.")
-    webscraper_group.add_argument("--follow-extern", action="store_true", help="Follow external links.")
-    webscraper_group.add_argument("--threads", type=int, default=4, help="Number of threads to use.")
-    webscraper_group.add_argument("--rate", type=int, default=5, help="Maximum requests per second.")
+    scraping_group = parser.add_argument_group('scraping options', 'Options for scraping files containing potential metadata from a website.')
+    scraping_group.add_argument('-s', '--scraping', action='store_true', help="Argument required to activate scraping mode.")
+    scraping_group.add_argument('-u', "--url", type=valid_url, help="Site url for scraping.")
+    scraping_group.add_argument("--scan", action="store_true", help="Scans the website and displays information and statistics without downloading files.")
+    scraping_group.add_argument("--depth", type=int, default=0, help="Depth of links to follow on the site.")
+    scraping_group.add_argument("--download-dir", type=valid_directory, help="Directory where files that have been scraped should be stored.")
+    scraping_group.add_argument("--follow-extern", action="store_true", help="Follow external links.")
+    scraping_group.add_argument("--threads", type=int, default=4, help="Number of threads to use.")
+    scraping_group.add_argument("--rate", type=int, default=5, help="Maximum number of requests per second.")
 
-    analysis_group = parser.add_argument_group('analysis options', 'Analysis options for MetaDetective.')
-    analysis_group.add_argument('-d', '--directory', type=valid_directory, help="Directory to analyze.")
-    analysis_group.add_argument('-f', '--files', nargs='+', help="File or list of files to analyze.")
-    analysis_group.add_argument('-t', '--type', nargs='+', default=['all'], help="File extension(s) or 'all' for all files.")
+    analysis_group = parser.add_argument_group('analysis options', 'Main analysis options.')
+    analysis_group.add_argument('-d', '--directory', type=valid_directory, help="Directory containing the files to be analyzed.")
+    analysis_group.add_argument('-f', '--files', nargs='+', help="File or space-separated list of files to be analyzed.")
 
-    display_group = parser.add_argument_group('display options', 'Options affecting how metadata is displayed')
-    display_group.add_argument('-i', '--ignore', nargs='+', help="Ignore specific items in display using regex or words.")
-    display_group.add_argument('-display', choices=['all', 'singular'], default='singular', help="Display mode: 'all' or 'singular'")
-    display_group.add_argument('-format', choices=['formatted', 'concise'], help="Display format for 'singular' mode: 'formatted' or 'concise'")
+    analysis_group.add_argument('-t', '--type', nargs='+', default=['all'], help="File types (extensions) to be analyzed (all by default).")
 
-    export_group = parser.add_argument_group('export options', 'Options for exporting metadata')
-    export_group.add_argument('-e', '--export', nargs='?', const='html', choices=['html', 'txt'], default=None, help="Export results. Optional formats: 'html' or 'txt'. If not specified, 'html' is the default.")
-    export_group.add_argument('-c', '--custom', type=valid_filename, help="Add a custom suffix to the export filename. It should be alphanumeric and less than 16 characters.")
-    export_group.add_argument('-o', '--output', type=valid_directory, default=os.getcwd(), help="Specify a custom output directory for the exported file.")
+    display_group = parser.add_argument_group('display options', 'Options for displaying results.')
+    display_group.add_argument('-i', '--ignore', nargs='+', help="Ignore one or more results separated by spaces for keywords or regexes.")
+    display_group.add_argument('--display', choices=['all', 'singular'], default='singular', help="Display options:\n'all' to display all relevant results for each file one by one.\n'singular' to display condensed results.'")
+    display_group.add_argument('--format', choices=['formatted', 'concise'], help="Display format ('singular' display required):\n'formatted' for a formatted (stylized) display.\n'concise' for more classic (basic) formatting.")
+
+    export_group = parser.add_argument_group('export options', 'Options for exporting results.')
+    export_group.add_argument('-e', '--export', nargs='?', const='html', choices=['html', 'txt'], default=None, help="Export results. Default format is HTML. Text export (txt) is also possible.")
+    export_group.add_argument('-c', '--custom', type=valid_filename, help="Custom file name. The name is generated with default values, but you can add a suffix.")
+    export_group.add_argument('-o', '--out', type=valid_directory, default=os.getcwd(), help="Specify file export directory.")
 
     args = parser.parse_args()
 
@@ -795,19 +1105,15 @@ def main():
 
     if args.scraping:
         if args.directory or args.files or args.ignore:
-            print("ERROR: --directory, --files, and --ignore cannot be used with --scraping.")
-            sys.exit(1)
-
-        if not args.url:
-            print("ERROR: --url is required when using --scraping.")
-            sys.exit(1)
+            parser.error("Analysis arguments (--directory/-d, --files/-f, and --ignore/-i) cannot be used with scrapping options (--scraping/-s).")
 
         if args.scan and args.download_dir:
-            print("ERROR: Use either --scan or --download-dir with --scraping, but not both.")
-            sys.exit(1)
+            parser.error("The scan (--scan) and download (--download-dir) arguments cannot be specified together. Choose between one or the other mode in scraping mode, but not both.")
         elif not args.scan and not args.download_dir:
-            print("ERROR: You must specify either --scan or --download-dir with --scraping.")
-            sys.exit(1)
+            parser.error("You must choose at least between the scan (--scan) or download (--download-dir) argument in scraping mode.")
+
+        if not args.url:
+            parser.error("The url choice argument (-u or --url) is required for scraping mode.")
 
         base_domain = urlparse(args.url).netloc
 
@@ -835,31 +1141,28 @@ def main():
         if args.scan:
             print("")
             if len(file_stats) > 0:
-                print("Statistics on files found:")
+                print("Scan results:")
                 for ext, count in file_stats.items():
-                    print(f"{ext}: {count} files")
+                    print(f"{ext}: {count}")
             if len(file_stats) > 0:
                 print("")
-            print(f"INFO: Total URLs processed: {len(seen)}")
+            print(f"INFO: Total URLs processed (followed): {len(seen)}")
 
         sys.exit(0)
 
     elif args.directory or args.files:
         if args.directory and args.files:
-            print("ERROR: Specify either --directory or --files, but not both.")
-            sys.exit(1)
+            parser.error("The directory (--directory/-d) and files (--files/-f) arguments cannot be specified together. Choose between one or the other mode in analysis mode, but not both.")
 
         ignore_patterns = args.ignore if args.ignore else []
 
         if args.display == 'all' and args.format:
-            print("Error: The -format argument is not allowed with -display all.")
-            sys.exit(1)
+            parser.error("The formatting (--format) argument is not compatible with the 'all' display mode (--display all).")
 
         if args.display == 'singular' and args.format is None:
             args.format = 'concise'
 
         files = get_files(args)
-
         all_metadata = [get_metadata(file, FIELDS) for file in files]
 
         if args.export:
@@ -874,17 +1177,16 @@ def main():
             custom_suffix = f"{args.custom}-" if args.custom else ""
             filename = f"MetaDetective_Export-{custom_suffix}{timestamp}{file_extension}"
 
-            full_path = os.path.join(args.output, filename)
+            full_path = os.path.join(args.out, filename)
 
             with open(full_path, "w") as f:
                 f.write(content)
-            print(f"Metadata exported to {filename}")
+            print(f"Results file exported to {full_path}")
         else:
             display_metadata(args, all_metadata, ignore_patterns)
 
     else:
-        print("ERROR: You must specify either --scraping or --directory or --files.")
-        sys.exit(1)
+        parser.error("You must specify either --scraping or --directory or --files.")
 
 
 if __name__ == "__main__":

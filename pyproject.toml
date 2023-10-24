@@ -24,3 +24,4 @@ Homepage = "https://github.com/franckferman/MetaDetective"
 
 [project.scripts]
 MetaDetective = "MetaDetective.MetaDetective:main"
+

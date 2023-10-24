@@ -25,4 +25,5 @@ jobs:
       run: pip install flake8
 
     - name: Check PEP8 compliance
-      run: flake8 . --count --ignore=E501 --exclude=tests
+      run: flake8 . --count --ignore=E501
+

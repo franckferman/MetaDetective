@@ -62,3 +62,4 @@ The following essential packages are installed:
 Due to the ENV PATH="/root/.local/bin:${PATH}" setting in the Dockerfile, you can directly launch MetaDetective within the container without needing to navigate to any specific directory. Simply invoke MetaDetective followed by the desired command-line arguments.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
+

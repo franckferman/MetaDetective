@@ -7,7 +7,6 @@
 [![MIT License][license-shield]](https://github.com/franckferman/MetaDetective/blob/stable/LICENSE)
 [![GitHub unittest Workflow Status][unittest-shield]](https://github.com/franckferman/MetaDetective/actions/workflows/unittest.yml)
 
-<div align="center">
 <a href="https://github.com/franckferman/MetaDetective">
 <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Logo-Without_background-MetaDetective.png" alt="MetaDetective logo, without background" width="auto" height="auto">
 </a>
@@ -15,7 +14,7 @@
 <h3 align="center">MetaDetective</h3>
 
 <p align="center">
-<strong>Delving Deep into File Metadata.</strong>
+<strong>Unleash Metadata Intelligence with MetaDetective.</strong>
 <br>
 Crafted to bridge the gap in metadata extraction and analysis.
 <br><br>
@@ -31,7 +30,8 @@ Crafted to bridge the gap in metadata extraction and analysis.
 <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Screenshot-MetaDetective_Demo.png" alt="MetaDetective Demo Screenshot" width="auto" height="auto">
 
 </div>
-</div>
+
+## Table of Contents
 
 <details>
   <summary>Table of Contents</summary>
@@ -48,11 +48,31 @@ Crafted to bridge the gap in metadata extraction and analysis.
 
 ## About
 
-Metadata often holds critical insights in cybersecurity, playing a pivotal role in OSINT and pentesting. With Metagoofil on Kali Linux pivoting away from direct metadata analysis, a gap emerged. Enter MetaDetective: a Python 3 tool adeptly filling this void. It efficiently extracts, categorizes, and displays metadata from single or multiple files, even supporting specific file extensions and result filtering. From author credentials and modification logs to embedded links and software details, and even GPS data, it illuminates potential cybersecurity investigation pathways. While not claiming to be groundbreaking, MetaDetective is undeniably a valuable asset for cybersecurity aficionados.
+<b>MetaDetective: Advanced metadata extraction and direct web scraping.</b>
+
+Metadata, in the realm of cybersecurity, is more than just embedded information; it's a gateway to insightful perspectives, often unveiling crucial leads in OSINT and pentesting. MetaDetective was born out of the need to offer a potent solution, especially as prominent tools like Metagoofil on Kali Linux shifted their focus away from direct metadata analysis.
+
+<b>Tailored Metadata Analysis</b>:
+
+Drawing inspiration from the foundational tools like Metagoofil, MetaDetective emerges as a revitalized and improved iteration, dedicated to providing efficient metadata extraction and presentation. It stands out as a comprehensive Python 3 tool, purposely designed to bridge the existing gaps in metadata analysis.
+
+<b>Streamlined Data Presentation</b>:
+
+With its capability to seamlessly extract, categorize, and exhibit metadata from single to multiple files, it ensures users have both the breadth and depth of data at their disposal.
+
+<b>Direct web scraping</b>:
+
+Where Metagoofil relies on Google searches — a method fraught with IP restrictions and the need for complex proxy workarounds — MetaDetective advances with its direct web scraping capability. By targeting websites directly, it minimizes disruptions and offers a richer and more accurate dataset, highlighting potential information leaks.
+
+<b>Complementary Utility for OSINT and Pentesting</b>:
+
+While functioning as a standalone powerhouse, MetaDetective is also optimized for symbiotic utility alongside tools like Metagoofil. It's a must-have in the toolkit of every pentester and OSINT researcher, accentuating data gathering capabilities and enriching the analysis spectrum.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
 ## 🚀 Installation
+
+Before diving into the installation process, ensure you meet the following prerequisites.
 
 ### Prerequisites
 
@@ -60,199 +80,129 @@ Metadata often holds critical insights in cybersecurity, playing a pivotal role 
 
 2. **Exiftool**: Given its simplicity, MetaDetective doesn't rely on any external dependencies or libraries. However, it does necessitate exiftool. Ensure you have exiftool set up on your system.
 
-🔺 **Important**: MetaDetective has been exclusively tested with Python 3.11.4 on Linux and in conjunction with exiftool version 12.56. While the tool might operate on other Python versions, distributions, or exiftool versions, compatibility are only assured with these specific configurations.
+> ⚠️ **Note**: MetaDetective has been rigorously tested with Python 3.11.4 on Linux alongside exiftool version 12.56. While it may function with other versions, compatibility is guaranteed only with these specific configurations.
 
-### Installation Steps
+### Installation Methods
 
-**Clone the Repository**:
-
-You have a couple of options to clone the repository:
-
-- Using HTTPS:
+1. **Git Clone the Repository**:
 ```bash
 git clone https://github.com/franckferman/MetaDetective.git
 ```
 
-- If you only need the script, you can also directly download it using curl:
+2. **Direct Download**:
+To skip cloning and directly download the script (designed for simplicity and flexibility, it doesn't depend on any external packages, so if you only need the script, you can also directly download it):
 ```bash
 curl -O https://raw.githubusercontent.com/franckferman/MetaDetective/stable/src/MetaDetective/MetaDetective.py
 ```
 
-This will provide you with the necessary project files.
+3. **Pip Installation**:
 
-**Alternative Installation using Pip**:
-
-If you prefer to use the package directly without cloning the repository or to ensure you have the latest stable version, you can install MetaDetective using pip:
-
-1. Create a Virtual Environment:
+- Create & Activate a Virtual Environment:
 ```bash
 python3 -m venv MetaDetectiveEnv
-```
-
-2. Activate the Virtual Environment:
-```bash
 source MetaDetectiveEnv/bin/activate
 ```
 
-3. Install MetaDetective via Pip:
+- Install MetaDetective:
 ```bash
 pip install MetaDetective
 ```
 
-By following either of the above methods, you'll have MetaDetective set up and ready to use on your system.
+4. **Docker Integration**:
+
+For a Docker-based setup, refer to our Docker-specific guide: [MetaDetective Docker Setup](https://github.com/franckferman/MetaDetective/blob/stable/docker/README.md).
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
 ## 🎮 Usage
 
-**Examples of Command Usage**:
+Ensure you adapt your command according to how you've set up `MetaDetective`.
 
-- Analyzing all files within a directory (with default settings):
+### **Getting Started**
+
+Kick off with the built-in help to explore MetaDetective's functionalities:
+
 ```bash
-python3 MetaDetective.py -d directory
+python3 src/MetaDetective/MetaDetective.py -h
 ```
 
-- Analyzing specific files while ignoring certain results and data types:
-```bash
-python3 MetaDetective.py -d directory -i ^admin anonymous -t doc pdf
-```
+### **Command Examples**
 
-- Analyzing all types of files within a directory in singular mode display, with a formatted mode type:
-```bash
-python3 MetaDetective.py -d directory -t all -display singular -format formatted
-```
+#### File Analysis:
 
-- Analyzing all files within a directory (with default settings) and exporting the results to HTML:
-```bash
-python3 MetaDetective.py -d directory --export MD_Export-Case_1.html
-```
+| Task | Command |
+| --- | --- |
+| Analyze all files in directory | `python3 src/MetaDetective/MetaDetective.py -d examples/` |
+| Specific types & ignore patterns | `python3 src/MetaDetective/MetaDetective.py -d examples/ -i ^admin anonymous -t doc pdf` |
+| Display all results for each file | `python3 src/MetaDetective/MetaDetective.py -d examples/ -t all --display all` |
 
-1. **Getting Started**
+#### File Analysis & Export:
 
-To begin, you can invoke the help command:
-```bash
-python3 MetaDetective.py -h
-```
+| Task | Command |
+| --- | --- |
+| Default export (HTML) | `python3 src/MetaDetective/MetaDetective.py -d examples/ --export` |
+| Formatted display, txt export | `python3 src/MetaDetective/MetaDetective.py -d examples ---format formatted -e txt -o ~/` |
 
-2. **Specifying Files for Analysis**
+#### Web Scraping:
 
-MetaDetective requires at least one file for processing:
-```bash
-python3 MetaDetective.py -f file
-```
+| Task | Command |
+| --- | --- |
+| Scan without downloading | `python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://example.com/` |
+| Download to specified directory | `python3 src/MetaDetective/MetaDetective.py --scraping --download-dir ~ --url https://example.com/` |
+| Download with set depth | `python3 src/MetaDetective/MetaDetective.py --scraping --depth 1 --download-dir ~ --url https://example.com/` |
 
-For multiple files, use:
-```bash
-python3 MetaDetective.py -f file1 file2 file3
-```
+### **Additional Parameters**
 
-You can also utilize patterns:
-```bash
-python3 MetaDetective.py -f *specificnameforFiles*
-```
+Dive deeper into MetaDetective's functionalities using additional parameters.
 
-Alternatively, specify a directory to process all files within it:
-```bash
-python3 MetaDetective.py -d directory
-```
+#### **Ignoring Specific Results**
 
-3. **Additional Parameters**
+To focus on pertinent results, filter out the noise:
 
-**Ignoring Specific Results**
+| Task | Command |
+| --- | --- |
+| Exclude specific results | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous` |
+| Exclude multiple terms | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous admin administrateur` |
+| Regex exclusions | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous ^admin` |
 
-Use -i to exclude non-pertinent results:
-```bash
-python3 MetaDetective.py -d directory -i anonymous
-```
+#### **Specifying Data Type**
 
-Specify multiple ignore terms:
-```bash
-python3 MetaDetective.py -d directory -i anonymous admin administrateur
-```
+Customize the type of data you analyze:
 
-Regex is also supported:
-```bash
-python3 MetaDetective.py -d directory -i anonymous ^admin
-```
+| Task | Command |
+| --- | --- |
+| Specify a data type | `python3 src/MetaDetective/MetaDetective.py -d directory -t pdf` |
+| Add multiple data types | `python3 src/MetaDetective/MetaDetective.py -d directory -t pdf doc` |
+| Include all types | `python3 src/MetaDetective/MetaDetective.py -d directory -t all` |
 
-**Specifying Data Type**
+#### **Display Options**
 
-The -t option lets you specify data types:
-```bash
-python3 MetaDetective.py -d directory -t pdf
-```
+Adapt the display of your results to suit your preferences:
 
-Add multiple data types:
-```bash
-python3 MetaDetective.py -d directory -t pdf doc
-```
+| Task | Command |
+| --- | --- |
+| Show each file's metadata | `python3 src/MetaDetective/MetaDetective.py --display all` |
+| Singular results without duplicates | `python3 src/MetaDetective/MetaDetective.py --display singular` |
 
-To include all types:
-```bash
-python3 MetaDetective.py -d directory -t all
-```
+#### **Format Options**
 
-**Display Options**
+Modify your display further with these:
 
-Use -display to modify the display:
-```bash
-python3 MetaDetective.py -display all
-```
+| Task | Command |
+| --- | --- |
+| Stylish display | `python3 src/MetaDetective/MetaDetective.py --display all --format formatted` |
+| Simpler look | `python3 src/MetaDetective/MetaDetective.py --display all --format concise` |
 
-This will show each file with relevant metadata.
+#### **Export Options**
 
-For a unique, centralized display without showing each file:
-```bash
-python3 MetaDetective.py -display singular
-```
+Document your findings with export options:
 
-This option filters and removes duplicates, focusing on singular results.
+| Task | Description | Command |
+| --- | --- | --- |
+| HTML Export (Default) | Generates an HTML file following the pattern: MetaDetective_Export-<TIMESTAMP>.html. | `python3 src/MetaDetective/MetaDetective.py -d directory -e` |
+| TXT Format Export | Output your results in TXT format. | `python3 src/MetaDetective/MetaDetective.py -d directory --export txt` |
 
-**Format Options**
-
-When using -display singular, further modify the display:
-
-Use -format formatted for a stylish display (with dashes):
-```bash
-python3 MetaDetective.py -display all -format formatted
-```
-
-Or use -format concise, for a simpler look:
-```bash
-python3 MetaDetective.py -display all -format concise
-```
-
-**Export Options**
-
-The -e or --export option provides the ability to export your metadata results. This can be useful for further analysis, sharing, or for maintaining a record of your findings.
-
-The default export format is HTML. However, for those who have a preference or specific need, we also offer the option to export in TXT format.
-
-- HTML Export (Default):
-
-Execute the following command for a default export:
-```bash
-python3 MetaDetective.py -d directory -e
-```
-
-This command will generate an HTML file with the naming pattern: MetaDetective_Export-<TIMESTAMP>.html.
-
-- TXT Format Export:
-
-If you want your results in TXT format, append the desired format after the --export or -e flag:
-```bash
-python3 MetaDetective.py -d directory --export txt
-```
-
-Keep in mind that the export format can affect the presentation and usability of the data. Make sure to select the format that aligns with your intended use or preference.
-
-<p align="right">(<a href="#top">🔼 Back to top</a>)</p>
-
-## 🐳 Docker Integration
-
-MetaDetective offers a Dockerized version for easy setup and consistent execution.
-
-To set up and use MetaDetective with Docker, refer to the Docker-specific documentation available here: [MetaDetective Docker Setup](https://github.com/franckferman/MetaDetective/blob/stable/docker/README.md).
+**Note**: The export format influences the presentation and usability of data. Choose the format that matches your needs.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 

@@ -26,3 +26,4 @@ jobs:
 
     - name: Run Bandit
       run: bandit ./src/MetaDetective/MetaDetective.py -s B404,B607,B603,B310
+

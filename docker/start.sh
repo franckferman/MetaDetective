@@ -36,3 +36,4 @@ fi
 # Enter the container shell
 echo "Entering container shell..."
 sudo docker exec -it $CONTAINER_NAME /bin/bash
+
