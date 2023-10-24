@@ -231,7 +231,7 @@ Analyze the contents of multiple files.
 python3 src/MetaDetective/MetaDetective.py -f examples/MetaDetective-APTX_4869_report.pdf examples/MetaDetective-Kogoro_s_Choice.pdf
 ```
 
-#### **Specifying Data Type**
+##### **Specifying Data Type**
 
 You can filter to analyze specific file types:
 
@@ -241,7 +241,7 @@ You can filter to analyze specific file types:
 | Add multiple data types | `python3 src/MetaDetective/MetaDetective.py -d directory -t pdf doc` |
 | Include all types | `python3 src/MetaDetective/MetaDetective.py -d directory -t all` |
 
-#### **Ignoring Specific Results**:
+##### **Ignoring Specific Results**:
 
 If you want to omit specific keywords from the displayed metadata, use the `-i` or `--ignore` flag. For instance, you might want to exclude common usernames like "admin" during the reconnaissance phase of your pentest. Regex patterns are supported, e.g., `^BeginBy`.
 
@@ -251,7 +251,7 @@ If you want to omit specific keywords from the displayed metadata, use the `-i` 
 | Exclude multiple terms | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous admin administrateur` |
 | Regex exclusions | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous ^admin` |
 
-#### **Display Options**
+##### **Display Options**
 
 Adapt the display of your results to suit your preferences:
 
@@ -260,7 +260,7 @@ Adapt the display of your results to suit your preferences:
 | Show each file's metadata | `python3 src/MetaDetective/MetaDetective.py --display all` |
 | Singular results without duplicates | `python3 src/MetaDetective/MetaDetective.py --display singular` |
 
-#### **Format Options**
+##### **Format Options**
 
 Modify your display further with these:
 
