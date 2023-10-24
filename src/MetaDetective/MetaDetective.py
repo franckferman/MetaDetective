@@ -263,11 +263,17 @@ def get_metadata(file_path: str, fields: List[str]) -> dict:
 
     Raises:
         subprocess.CalledProcessError: If there's an error executing exiftool.
+        UnicodeDecodeError: If there's an error decoding the exiftool output.
     """
     try:
         exiftool_output = subprocess.run(["exiftool", file_path], capture_output=True, text=True, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error executing exiftool: {e}")
+        print()
+        return {}
+    except UnicodeDecodeError as e:
+        print(f"Error decoding output for file {file_path}: {e}")
+        print()
         return {}
 
     field_set = set(fields)
