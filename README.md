@@ -1,5 +1,6 @@
 <div id="top" align="center">
 
+<!-- Shields -->
 [![Contributors][contributors-shield]](https://github.com/franckferman/MetaDetective/graphs/contributors)
 [![Forks][forks-shield]](https://github.com/franckferman/MetaDetective/network/members)
 [![Stargazers][stars-shield]](https://github.com/franckferman/MetaDetective/stargazers)
@@ -7,66 +8,77 @@
 [![MIT License][license-shield]](https://github.com/franckferman/MetaDetective/blob/stable/LICENSE)
 [![GitHub unittest Workflow Status][unittest-shield]](https://github.com/franckferman/MetaDetective/actions/workflows/unittest.yml)
 
+<!-- Logo -->
 <a href="https://github.com/franckferman/MetaDetective">
-<img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Logo-Without_background-MetaDetective.png" alt="MetaDetective logo, without background" width="auto" height="auto">
+  <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Logo-Without_background-MetaDetective.png" alt="MetaDetective Logo" width="auto" height="auto">
 </a>
 
-<h3 align="center">MetaDetective</h3>
-
+<!-- Title & Tagline -->
+<h3 align="center">🕵️‍♂️ MetaDetective</h3>
 <p align="center">
-<strong>Unleash Metadata Intelligence with MetaDetective.</strong>
-<br>
-Crafted to bridge the gap in metadata extraction and analysis.
-<br><br>
-<a href="https://github.com/franckferman/MetaDetective/blob/stable/README.md" class="button-style"><strong>Explore the full documentation »</strong></a>
-<br><br>
-<a href="https://asciinema.org/a/GdFRcXxlnQMcpD6876zVhmpqO" class="button-style">View Demo</a>
-.
-<a href="https://github.com/franckferman/MetaDetective/issues">Report Bug</a>
-·
-<a href="https://github.com/franckferman/MetaDetective/issues">Request Feature</a>
+    <em>Unleash Metadata Intelligence with MetaDetective.</em>
+    <br>
+    Bridging the chasm in metadata extraction and analysis.
 </p>
 
-<img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Screenshot-MetaDetective_Demo.png" alt="MetaDetective Demo Screenshot" width="auto" height="auto">
+<!-- Links & Demo -->
+<p align="center">
+    <a href="https://github.com/franckferman/MetaDetective/blob/stable/README.md" class="button-style"><strong>📘 Explore the full documentation</strong></a>
+    ·
+    <a href="https://asciinema.org/a/GdFRcXxlnQMcpD6876zVhmpqO" class="button-style">🎥 View Demo</a>
+    ·
+    <a href="https://github.com/franckferman/MetaDetective/issues">🐞 Report Bug</a>
+    ·
+    <a href="https://github.com/franckferman/MetaDetective/issues">🛠️ Request Feature</a>
+</p>
+
+<!-- Screenshot -->
+<p align="center">
+  <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Screenshot-MetaDetective_Demo.png" alt="MetaDetective Demo Screenshot" width="auto" height="auto">
+</p>
 
 </div>
 
 ## Table of Contents
 
-<details>
-  <summary>Table of Contents</summary>
+## 📜 Table of Contents
+
+<details open>
+  <summary><strong>Click to collapse/expand</strong></summary>
   <ol>
-    <li><a href="#about">About</a></li>
-    <li><a href="#-installation">Installation</a></li>
-    <li><a href="#-usage">Usage</a></li>
-    <li><a href="#-troubleshooting">Troubleshooting</a></li>
-    <li><a href="#-contributing">Contributing</a></li>
-    <li><a href="#-license">License</a></li>
-    <li><a href="#-contact">Contact</a></li>
+    <li><a href="#about">📖 About</a></li>
+    <li><a href="#-installation">🛠️ Installation</a></li>
+    <li><a href="#-usage">🎮 Usage</a></li>
+    <li><a href="#-troubleshooting">❗ Troubleshooting</a></li>
+    <li><a href="#-contributing">🤝 Contributing</a></li>
+    <li><a href="#-license">📜 License</a></li>
+    <li><a href="#-contact">📞 Contact</a></li>
   </ol>
 </details>
 
 ## About
 
-<b>MetaDetective: Advanced metadata extraction and direct web scraping.</b>
+**MetaDetective:** _Advanced metadata extraction and web scraping._
 
 Metadata, in the realm of cybersecurity, is more than just embedded information; it's a gateway to insightful perspectives, often unveiling crucial leads in OSINT and pentesting. MetaDetective was born out of the need to offer a potent solution, especially as prominent tools like Metagoofil on Kali Linux shifted their focus away from direct metadata analysis.
 
-<b>Tailored Metadata Analysis</b>:
+As key tools like Metagoofil on Kali Linux shifted their trajectory away from pure metadata analysis, the exigency for a robust alternative took center stage. Enter **MetaDetective**.
+
+### 🧠 Tailored Metadata Analysis
 
 Drawing inspiration from the foundational tools like Metagoofil, MetaDetective emerges as a revitalized and improved iteration, dedicated to providing efficient metadata extraction and presentation. It stands out as a comprehensive Python 3 tool, purposely designed to bridge the existing gaps in metadata analysis.
 
-<b>Streamlined Data Presentation</b>:
+### 📊 Streamlined Data Presentation
 
-With its capability to seamlessly extract, categorize, and exhibit metadata from single to multiple files, it ensures users have both the breadth and depth of data at their disposal.
+Beyond mere extraction, MetaDetective prides itself on its capability to meticulously categorize and showcase metadata. Whether dealing with an individual file or an array of them, the tool ensures users grasp the entire spectrum of data, both in its breadth and depth.
 
-<b>Direct web scraping</b>:
+### 🌐 Web Scraping
 
-Where Metagoofil relies on Google searches — a method fraught with IP restrictions and the need for complex proxy workarounds — MetaDetective advances with its direct web scraping capability. By targeting websites directly, it minimizes disruptions and offers a richer and more accurate dataset, highlighting potential information leaks.
+While Metagoofil once leaned on Google searches—a method riddled with IP restrictions and the labyrinth of proxy workarounds—MetaDetective pioneers a path with direct web scraping. By targeting sites directly, it sidesteps disruptions, delivering a dataset that's not just richer, but also more precise, spotlighting potential data leaks.
 
-<b>Complementary Utility for OSINT and Pentesting</b>:
+### 🔍 Complementary Utility for OSINT and Pentesting
 
-While functioning as a standalone powerhouse, MetaDetective is also optimized for symbiotic utility alongside tools like Metagoofil. It's a must-have in the toolkit of every pentester and OSINT researcher, accentuating data gathering capabilities and enriching the analysis spectrum.
+MetaDetective isn't just a standalone behemoth. It's crafted for seamless integration and synergy with tools like Metagoofil. A quintessential addition to every pentester's and OSINT researcher's toolkit, MetaDetective magnifies data acquisition prowess and broadens the horizons of analysis.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
@@ -128,7 +140,7 @@ python3 src/MetaDetective/MetaDetective.py -h
 
 ### **Command Examples**
 
-#### File Analysis:
+#### 🕵️ File analysis:
 
 | Task | Command |
 | --- | --- |
@@ -136,14 +148,14 @@ python3 src/MetaDetective/MetaDetective.py -h
 | Specific types & ignore patterns | `python3 src/MetaDetective/MetaDetective.py -d examples/ -i ^admin anonymous -t doc pdf` |
 | Display all results for each file | `python3 src/MetaDetective/MetaDetective.py -d examples/ -t all --display all` |
 
-#### File Analysis & Export:
+#### 🔎 Export function:
 
 | Task | Command |
 | --- | --- |
 | Default export (HTML) | `python3 src/MetaDetective/MetaDetective.py -d examples/ --export` |
 | Formatted display, txt export | `python3 src/MetaDetective/MetaDetective.py -d examples ---format formatted -e txt -o ~/` |
 
-#### Web Scraping:
+#### 🌐 Web Scraping:
 
 | Task | Command |
 | --- | --- |
@@ -153,27 +165,87 @@ python3 src/MetaDetective/MetaDetective.py -h
 
 ### **Additional Parameters**
 
-Dive deeper into MetaDetective's functionalities using additional parameters.
+#### 🌐 Web Scraping:
 
-#### **Ignoring Specific Results**
+To initiate the web scraping mode, use the `--scraping` flag. Remember, this option doesn't function independently. It requires either a scanning or downloading parameter.
 
-To focus on pertinent results, filter out the noise:
+- **Activating Web Scraping Mode**: 
+```bash
+python3 src/MetaDetective/MetaDetective.py --scraping
+```
 
-| Task | Command |
-| --- | --- |
-| Exclude specific results | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous` |
-| Exclude multiple terms | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous admin administrateur` |
-| Regex exclusions | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous ^admin` |
+- **Scanning & Displaying Statistics**: 
+Ensure both the URL and `--scan` flags are used.
+```bash
+python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://example.com
+```
+
+- **Downloading Web Content**:
+Indicate the desired directory using `--download-dir` and provide the target URL.
+```bash
+python3 src/MetaDetective/MetaDetective.py --scraping --download-dir ~ --url https://example.com
+```
+
+- **Adjusting Scraping Depth**:
+Use the `--depth` flag to specify how deeply the scraper should navigate through links.
+```bash
+python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://aulnay-sous-bois.fr --depth 1
+```
+
+### **Additional Flags**:
+
+- **External Link Tracking**: 
+Use `--follow-extern` to allow tracking of external links (those outside the base URL). Typically not advised, but might be useful in certain contexts.
+
+- **Thread Management**: 
+Use `--threads` to specify the number of threads for concurrent operations.
+
+- **Rate Limiting**:
+Use `--rate` to control the maximum number of requests per second.
+
+### 🕵️ File analysis & Metadata Analyzer:
+
+#### **Basic Commands**:
+
+To begin analyzing files, you'll use either the `-d` or `-f` flag.
+
+- `-d` or `--directory`: Select a directory containing one or multiple files.
+- `-f` or `--files`: Choose a single or multiple specific files.
+
+Analyze the contents of a directory.
+```bash
+python3 src/MetaDetective/MetaDetective.py -d examples
+```
+
+Analyze the contents of a file.
+```bash
+python3 src/MetaDetective/MetaDetective.py -f examples/MetaDetective.docx
+```
+
+Analyze the contents of multiple files.
+```bash
+python3 src/MetaDetective/MetaDetective.py -f examples/MetaDetective-APTX_4869_report.pdf examples/MetaDetective-Kogoro_s_Choice.pdf
+```
 
 #### **Specifying Data Type**
 
-Customize the type of data you analyze:
+You can filter to analyze specific file types:
 
 | Task | Command |
 | --- | --- |
 | Specify a data type | `python3 src/MetaDetective/MetaDetective.py -d directory -t pdf` |
 | Add multiple data types | `python3 src/MetaDetective/MetaDetective.py -d directory -t pdf doc` |
 | Include all types | `python3 src/MetaDetective/MetaDetective.py -d directory -t all` |
+
+#### **Ignoring Specific Results**:
+
+If you want to omit specific keywords from the displayed metadata, use the `-i` or `--ignore` flag. For instance, you might want to exclude common usernames like "admin" during the reconnaissance phase of your pentest. Regex patterns are supported, e.g., `^BeginBy`.
+
+| Task | Command |
+| --- | --- |
+| Exclude specific results | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous` |
+| Exclude multiple terms | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous admin administrateur` |
+| Regex exclusions | `python3 src/MetaDetective/MetaDetective.py -d directory -i anonymous ^admin` |
 
 #### **Display Options**
 
@@ -193,16 +265,28 @@ Modify your display further with these:
 | Stylish display | `python3 src/MetaDetective/MetaDetective.py --display all --format formatted` |
 | Simpler look | `python3 src/MetaDetective/MetaDetective.py --display all --format concise` |
 
-#### **Export Options**
+### 🔎 **Export Options**
 
-Document your findings with export options:
+MetaDetective provides flexibility in exporting analysis results.
+
+By default, using the `--export` or `-e` option will save your results in an HTML format. This design ensures a visually appealing report for your analysis.
+
+If you prefer a `.txt` format, that's possible too. Switch between formats using the `-e` or `--export` flag followed by the desired format: `-e txt` or `-e pdf`.
+
+The export will, by default, use a predefined name appended with a timestamp. To customize this name, you can append a suffix using the `-c` or `--custom` flag.
+
+Further, the `--out` or `-o` argument lets you specify the directory path for your exported data.
+
+**Be aware**: The `display` and `format` options, as previously discussed, will influence the presentation of your exported document, whether in HTML or TXT format. Data representation might differ between the two formats.
 
 | Task | Description | Command |
 | --- | --- | --- |
-| HTML Export (Default) | Generates an HTML file following the pattern: MetaDetective_Export-<TIMESTAMP>.html. | `python3 src/MetaDetective/MetaDetective.py -d directory -e` |
-| TXT Format Export | Output your results in TXT format. | `python3 src/MetaDetective/MetaDetective.py -d directory --export txt` |
+| HTML Export (Default) | Produces an HTML file named: `MetaDetective_Export-<TIMESTAMP>.html`. | `python3 src/MetaDetective/MetaDetective.py -d directory -e` |
+| TXT Format Export | Save results in TXT format. | `python3 src/MetaDetective/MetaDetective.py -d directory --export txt` |
+| Custom Filename Suffix | Add a custom suffix to the filename. | `python3 src/MetaDetective/MetaDetective.py -d directory -e --custom Pentest-MD_2` |
+| Specify Output Directory | Define the directory for data export. | `python3 src/MetaDetective/MetaDetective.py -d directory -e -o directory` |
 
-**Note**: The export format influences the presentation and usability of data. Choose the format that matches your needs.
+**Note**: The export format can greatly affect data presentation and accessibility. Opt for the format that aligns with your requirements.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
