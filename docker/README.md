@@ -62,7 +62,6 @@ Retrieve the Docker image using:
 ### Running the Container <a name="running-the-container"></a>
 
 Start a container based on the image:
-
 ```bash
 # docker run -it --name metadetective franckferman/metadetective /bin/bash
 ```
