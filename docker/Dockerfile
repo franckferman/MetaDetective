@@ -19,4 +19,3 @@ RUN pip3 install MetaDetective && \
 ENV PATH="/root/.local/bin:${PATH}"
 
 CMD ["tail", "-f", "/dev/null"]
-
