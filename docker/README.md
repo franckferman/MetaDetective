@@ -8,6 +8,7 @@ This document offers instructions on how to set up and utilize the Dockerized ve
   <summary>Table of Contents</summary>
   <ol>
     <li><a href="#getting-started">Getting Started</a></li>
+    <li><a href="#using-pre-built-image">Using the Pre-built Image</a></li>
     <li><a href="#dockerfile-details">Dockerfile Details</a></li>
   </ol>
 </details>
@@ -25,7 +26,7 @@ This document offers instructions on how to set up and utilize the Dockerized ve
 
 To build and run the Docker image:
 ```bash
-sudo ./start.sh
+# ./start.sh
 ```
 
 When executed, this script performs the following actions:
@@ -38,12 +39,69 @@ When executed, this script performs the following actions:
 
 In case you want to stop the running container and/or remove the Docker image:
 ```bash
-sudo ./remove.sh
+# ./remove.sh
 ```
 
 Executing this script will:
 1. Stop and remove the metadetective-container if it's currently running.
 2. Prompt you with the option to delete the metadetective-image.
+
+<p align="right">(<a href="#top">🔼 Back to top</a>)</p>
+
+## Using the Pre-built Image <a name="using-pre-built-image"></a>
+
+If you'd rather use the pre-built Docker image from Docker Hub, follow these steps:
+
+### Pulling the Image <a name="pulling-the-image"></a>
+
+Retrieve the Docker image using:
+```bash
+# docker pull franckferman/metadetective:1.0.8-df.2
+```
+
+### Running the Container <a name="running-the-container"></a>
+
+Start a container based on the image:
+
+```bash
+# docker run -it --name metadetective franckferman/metadetective:1.0.8-df.2 /bin/bash
+```
+
+### Stopping the Container
+
+```bash
+# docker stop metadetective
+```
+
+This command will stop the container named "metadetective".
+
+### Removing the Container
+
+Once the container is stopped, you can remove it using:
+```bash
+# docker rm metadetective
+```
+
+This command will remove the container named "metadetective".
+
+### Troubleshooting container deletion problems
+
+1. List All Containers (including stopped ones):
+```bash
+# docker ps -a
+```
+
+Check if the container "metadetective" is listed. If it's listed, note the container ID.
+
+2. Force Remove the Container:
+```bash
+# docker rm -f metadetective
+```
+
+Alternatively, if using the container ID:
+```bash
+# docker rm -f [CONTAINER_ID]
+```
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
@@ -62,4 +120,3 @@ The following essential packages are installed:
 Due to the ENV PATH="/root/.local/bin:${PATH}" setting in the Dockerfile, you can directly launch MetaDetective within the container without needing to navigate to any specific directory. Simply invoke MetaDetective followed by the desired command-line arguments.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
-
