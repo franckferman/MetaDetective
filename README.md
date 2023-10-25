@@ -25,7 +25,7 @@
 <p align="center">
     <a href="https://github.com/franckferman/MetaDetective/blob/stable/README.md" class="button-style"><strong>📘 Explore the full documentation</strong></a>
     ·
-    <a href="https://asciinema.org/a/GdFRcXxlnQMcpD6876zVhmpqO" class="button-style">🎥 View Demo</a>
+    <a href="https://asciinema.org/a/55mEbe7GFVfIJ6OSfjOaDeYLv" class="button-style">🎥 View Demo</a>
     ·
     <a href="https://github.com/franckferman/MetaDetective/issues">🐞 Report Bug</a>
     ·
