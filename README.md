@@ -32,10 +32,7 @@
     <a href="https://github.com/franckferman/MetaDetective/issues">🛠️ Request Feature</a>
 </p>
 
-<!-- Screenshot -->
-<p align="center">
-  <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Screenshot-MetaDetective_Demo.png" alt="MetaDetective Demo Screenshot" width="auto" height="auto">
-</p>
+https://github.com/franckferman/MetaDetective/assets/73023545/7b245f87-37e2-40b7-8b3c-88aefecb4e13  
 
 </div>
 
@@ -44,7 +41,7 @@
 <details open>
   <summary><strong>Click to collapse/expand</strong></summary>
   <ol>
-    <li><a href="#-about-metadetective">📖 About</a></li>
+    <li><a href="#-about">📖 About</a></li>
     <li><a href="#-installation">🛠️ Installation</a></li>
     <li><a href="#-usage">🎮 Usage</a></li>
     <li><a href="#-troubleshooting">❗ Troubleshooting</a></li>
@@ -54,7 +51,7 @@
   </ol>
 </details>
 
-## 🕵️‍♂️ About MetaDetective
+## 📖 About
 
 **MetaDetective:** _Advanced metadata extraction and web scraping._
 
@@ -69,6 +66,10 @@ Drawing inspiration from the foundational tools like Metagoofil, MetaDetective e
 ### 📊 Streamlined Data Presentation
 
 Beyond mere extraction, MetaDetective prides itself on its capability to meticulously categorize and showcase metadata. Whether dealing with an individual file or an array of them, the tool ensures users grasp the entire spectrum of data, both in its breadth and depth.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Screenshot-MetaDetective_Demo.png" alt="MetaDetective Demo Screenshot" width="auto" height="auto">
+</p>
 
 ### 🌐 Web Scraping
 
