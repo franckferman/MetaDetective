@@ -56,7 +56,7 @@ If you'd rather use the pre-built Docker image from Docker Hub, follow these ste
 
 Retrieve the Docker image using:
 ```bash
-# docker pull franckferman/metadetective:1.0.8-df.2
+# docker pull franckferman/metadetective
 ```
 
 ### Running the Container <a name="running-the-container"></a>
@@ -64,7 +64,7 @@ Retrieve the Docker image using:
 Start a container based on the image:
 
 ```bash
-# docker run -it --name metadetective franckferman/metadetective:1.0.8-df.2 /bin/bash
+# docker run -it --name metadetective franckferman/metadetective /bin/bash
 ```
 
 ### Stopping the Container
