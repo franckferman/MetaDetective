@@ -55,7 +55,7 @@ https://github.com/franckferman/MetaDetective/assets/73023545/7b245f87-37e2-40b7
 
 **MetaDetective:** _Advanced metadata extraction and web scraping._
 
-Metadata, in the realm of cybersecurity, is more than just embedded information; it's a gateway to insightful perspectives, often unveiling crucial leads in OSINT and pentesting. MetaDetective was born out of the need to offer a potent solution, especially as prominent tools like Metagoofil on Kali Linux shifted their focus away from direct metadata analysis.
+Metadata, in the realm of cybersecurity, is more than just embedded information; it's a gateway to insightful perspectives, often unveiling crucial leads in OSINT and pentesting.
 
 As key tools like Metagoofil on Kali Linux shifted their trajectory away from pure metadata analysis, the exigency for a robust alternative took center stage. Enter **MetaDetective**.
 
