@@ -2,11 +2,15 @@ name: pep8
 
 on:
   push:
-    branches:
-      - stable
+    branches: [ "stable" ]
+    paths:
+      - 'tests/test_MetaDetective.py'
+      - 'src/MetaDetective.py'
   pull_request:
-    branches:
-      - stable
+    branches: [ "stable" ]
+    paths:
+      - 'tests/test_MetaDetective.py'
+      - 'src/MetaDetective.py'
 
 jobs:
   flake8:
