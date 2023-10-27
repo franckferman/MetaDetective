@@ -333,7 +333,7 @@ This project is licensed under the GNU Affero General Public License, Version 3.
 
 [![ProtonMail][protonmail-shield]](mailto:contact@franckferman.fr) 
 [![LinkedIn][linkedin-shield]](https://www.linkedin.com/in/franckferman)
-[![Twitter][twitter-shield]](https://www.twitter.com/in/franckferman)
+[![Twitter][twitter-shield]](https://www.twitter.com/franckferman)
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
