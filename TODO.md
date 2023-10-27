@@ -24,5 +24,3 @@
 - [ ] **Enhanced Filtering Capabilities**
   - [ ] Add support for scraping filter options.
   - [ ] Implement local filtering based on sections like "Author" and "Last Modified By".
-- [ ] **Additional Export Formats**
-  - [ ] Add support for exporting data in CSV format.
