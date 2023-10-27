@@ -2,11 +2,13 @@ name: bandit
 
 on:
   push:
-    branches:
-      - stable
+    branches: [ "stable" ]
+    paths:
+      - 'src/MetaDetective.py'
   pull_request:
-    branches:
-      - stable
+    branches: [ "stable" ]
+    paths:
+      - 'src/MetaDetective.py'
 
 jobs:
   security-check:
