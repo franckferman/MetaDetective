@@ -46,6 +46,7 @@ https://github.com/franckferman/MetaDetective/assets/73023545/7b245f87-37e2-40b7
     <li><a href="#-usage">🎮 Usage</a></li>
     <li><a href="#-troubleshooting">❗ Troubleshooting</a></li>
     <li><a href="#-contributing">🤝 Contributing</a></li>
+    <li><a href="#-star-evolution">🌠 Star Evolution</a></li>
     <li><a href="#-license">📜 License</a></li>
     <li><a href="#-contact">📞 Contact</a></li>
   </ol>
@@ -53,7 +54,7 @@ https://github.com/franckferman/MetaDetective/assets/73023545/7b245f87-37e2-40b7
 
 ## 📖 About
 
-**MetaDetective:** _Advanced metadata extraction and web scraping._
+**MetaDetective:** _Advanced metadata analysis and web scraping._
 
 Metadata, in the realm of cybersecurity, is more than just embedded information; it's a gateway to insightful perspectives, often unveiling crucial leads in OSINT and pentesting.
 
@@ -81,7 +82,7 @@ While Metagoofil once leaned on Google searches—a method riddled with IP restr
 
 ### 🔍 Complementary Utility for OSINT and Pentesting
 
-MetaDetective isn't just a standalone behemoth. It's crafted for seamless integration and synergy with tools like Metagoofil. A quintessential addition to every pentester's and OSINT researcher's toolkit, MetaDetective magnifies data acquisition prowess and broadens the horizons of analysis.
+Although it is now independent and offers its own functions, including scraping, MetaDetective isn't just a standalone behemoth. It's crafted for seamless integration and synergy with tools like Metagoofil. A quintessential addition to every pentester's and OSINT researcher's toolkit, MetaDetective magnifies data acquisition prowess and broadens the horizons of analysis.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
@@ -309,6 +310,19 @@ We truly appreciate and welcome community involvement. Your contributions, feedb
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
+## 🌠 Star Evolution
+
+Explore the star history of this project and see how it has evolved over time:
+
+<a href="https://star-history.com/#franckferman/MetaDetective&Timeline">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=franckferman/MetaDetective&type=Timeline&theme=dark" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=franckferman/MetaDetective&type=Timeline" />
+  </picture>
+</a>
+
+Your support is greatly appreciated. We're grateful for every star! Your backing fuels our passion. ✨
+
 ## 📚 License
 
 This project is licensed under the GNU Affero General Public License, Version 3.0. For more details, please refer to the LICENSE file in the repository: [Read the license on GitHub](https://github.com/franckferman/MetaDetective/blob/stable/LICENSE)
@@ -319,6 +333,7 @@ This project is licensed under the GNU Affero General Public License, Version 3.
 
 [![ProtonMail][protonmail-shield]](mailto:contact@franckferman.fr) 
 [![LinkedIn][linkedin-shield]](https://www.linkedin.com/in/franckferman)
+[![Twitter][twitter-shield]](https://www.twitter.com/in/franckferman)
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
@@ -335,5 +350,6 @@ This project is licensed under the GNU Affero General Public License, Version 3.
 [license-shield]: https://img.shields.io/github/license/franckferman/MetaDetective.svg?style=for-the-badge
 [license-url]: https://github.com/franckferman/MetaDetective/blob/stable/LICENSE
 [unittest-shield]: https://img.shields.io/github/actions/workflow/status/franckferman/MetaDetective/unittest.yml?style=for-the-badge
-[protonmail-shield]: https://img.shields.io/badge/ProtonMail-8B89CC?style=for-the-badge&logo=protonmail&logoColor=white
+[protonmail-shield]: https://img.shields.io/badge/ProtonMail-8B89CC?style=for-the-badge&logo=protonmail&logoColor=blueviolet
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=blue
+[twitter-shield]: https://img.shields.io/badge/-Twitter-black.svg?style=for-the-badge&logo=twitter&colorB=blue
