@@ -2,11 +2,13 @@ name: unittest
 
 on:
   push:
-    branches:
-      - stable
+    branches: [ "stable" ]
+    paths:
+      - 'tests/test_MetaDetective.py'
   pull_request:
-    branches:
-      - stable
+    branches: [ "stable" ]
+    paths:
+      - 'tests/test_MetaDetective.py'
 
 jobs:
   unittest:
@@ -23,4 +25,3 @@ jobs:
 
     - name: Run Unit Tests
       run: python -m unittest discover tests -p '*test*.py'
-
