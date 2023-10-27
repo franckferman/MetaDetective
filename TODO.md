@@ -18,3 +18,11 @@
 
 - [X] ~~**PyPI Automatic Upload on Release**~~
   - ~~Integrate GitHub Actions to trigger PyPI package upload on every new release.~~
+
+### Advanced Filtering
+
+- [ ] **Enhanced Filtering Capabilities**
+  - [ ] Add support for scraping filter options.
+  - [ ] Implement local filtering based on sections like "Author" and "Last Modified By".
+- [ ] **Additional Export Formats**
+  - [ ] Add support for exporting data in CSV format.
