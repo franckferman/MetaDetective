@@ -827,8 +827,7 @@ def fetch_links_from_url(url: str) -> List[str]:
         urllib.error.URLError: If there's an issue with opening the URL.
         ValueError: If there's an issue with decoding the response data.
     """
-    if url.startswith("javascript:"):
-        return []
+    pattern = re.compile(r"\.(css|js)($|\?|#)")
 
     try:
         response = urllib.request.urlopen(url)
@@ -840,7 +839,7 @@ def fetch_links_from_url(url: str) -> List[str]:
         data = response.read().decode()
         parser = LinkParser()
         parser.feed(data)
-        return parser.links
+        return [link for link in parser.links if not link.startswith("javascript:") and not pattern.search(link)]
 
     except urllib.error.URLError as e:
         print(f"ERROR: Unable to open {url} Reason: {e}")
@@ -1082,6 +1081,7 @@ def main():
     scraping_group.add_argument('-s', '--scraping', action='store_true', help="Argument required to activate scraping mode.")
     scraping_group.add_argument('-u', "--url", type=valid_url, help="Site url for scraping.")
     scraping_group.add_argument("--scan", action="store_true", help="Scans the website and displays information and statistics without downloading files.")
+    scraping_group.add_argument('--extensions', nargs='+', type=str.lower, help='File extensions to filter by, e.g., --extensions pdf jpg png')
     scraping_group.add_argument("--depth", type=int, default=0, help="Depth of links to follow on the site.")
     scraping_group.add_argument("--download-dir", type=valid_directory, help="Directory where files that have been scraped should be stored.")
     scraping_group.add_argument("--follow-extern", action="store_true", help="Follow external links.")
@@ -1121,6 +1121,10 @@ def main():
 
         if not args.url:
             parser.error("The url choice argument (-u or --url) is required for scraping mode.")
+
+        if args.extensions:
+            global EXTENSIONS
+            EXTENSIONS = args.extensions
 
         base_domain = urlparse(args.url).netloc
 
