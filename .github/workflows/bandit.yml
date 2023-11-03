@@ -4,11 +4,11 @@ on:
   push:
     branches: [ "stable" ]
     paths:
-      - 'src/MetaDetective.py'
+      - 'src/MetaDetective/MetaDetective.py'
   pull_request:
     branches: [ "stable" ]
     paths:
-      - 'src/MetaDetective.py'
+      - 'src/MetaDetective/MetaDetective.py'
 
 jobs:
   security-check:
