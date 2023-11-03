@@ -842,7 +842,10 @@ def fetch_links_from_url(url: str) -> List[str]:
         return [link for link in parser.links if not link.startswith("javascript:") and not pattern.search(link)]
 
     except urllib.error.URLError as e:
-        print(f"ERROR: Unable to open {url} Reason: {e}")
+        if url.startswith("mailto:"):
+            print(f"INFO: Found mailto link {url}")
+        else:
+            print(f"ERROR: Unable to open {url} Reason: {e}")
         return []
     except urllib.error.HTTPError as e:
         print(f"HTTP Error for URL {url} Reason: {e.code} - {e.reason}")
