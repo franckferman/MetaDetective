@@ -5,12 +5,12 @@ on:
     branches: [ "stable" ]
     paths:
       - 'tests/test_MetaDetective.py'
-      - 'src/MetaDetective.py'
+      - 'src/MetaDetective/MetaDetective.py'
   pull_request:
     branches: [ "stable" ]
     paths:
       - 'tests/test_MetaDetective.py'
-      - 'src/MetaDetective.py'
+      - 'src/MetaDetective/MetaDetective.py'
 
 jobs:
   flake8:
