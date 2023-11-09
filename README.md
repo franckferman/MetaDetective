@@ -164,6 +164,7 @@ python3 src/MetaDetective/MetaDetective.py -h
 | Task | Command |
 | --- | --- |
 | Scan without downloading | `python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://example.com/` |
+| Scan without downloading PDF files only | `python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://example.com/ --extensions pdf` |
 | Download to specified directory | `python3 src/MetaDetective/MetaDetective.py --scraping --download-dir ~ --url https://example.com/` |
 | Download with set depth | `python3 src/MetaDetective/MetaDetective.py --scraping --depth 1 --download-dir ~ --url https://example.com/` |
 
