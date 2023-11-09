@@ -900,11 +900,15 @@ def process_url(url: str, depth: int, base_domain: str, q, seen: Set[str],
 
     rate_limiter.wait()
 
-    links = fetch_links_from_url(url)
+    links = fetch_links_from_url(url)   
 
     file_links = [urljoin(url, link) for link in links if is_valid_file_link(link)]
 
     if download_dir and not scan:
+        if not file_links:
+            print("\nNo files found or no files with specified extensions.")
+            return
+
         for file_link in file_links:
             download_file(file_link, download_dir)
     elif scan:
@@ -1216,6 +1220,10 @@ def main():
             t.join()
 
         if args.scan:
+            if not any(file_stats.values()):
+                print("\nNo files found or no files with specified extensions.")
+                sys.exit(0)
+
             print("\nScan results:\n")
             print("+---------------+-----------------------------------+")
             print("| File Extension | Estimated Number of Unique Files |")
