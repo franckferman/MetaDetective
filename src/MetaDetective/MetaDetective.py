@@ -900,7 +900,7 @@ def process_url(url: str, depth: int, base_domain: str, q, seen: Set[str],
 
     rate_limiter.wait()
 
-    links = fetch_links_from_url(url)   
+    links = fetch_links_from_url(url)
 
     file_links = [urljoin(url, link) for link in links if is_valid_file_link(link)]
 
