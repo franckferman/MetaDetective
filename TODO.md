@@ -24,3 +24,10 @@
 - [ ] **Enhanced Filtering Capabilities**
   - [X] ~~Add support for scraping filter options.~~
   - [ ] Implement local filtering based on sections like "Author" and "Last Modified By".
+
+### Performance Enhancements
+
+- [ ] **Optimize File Comparison for Duplication Avoidance**
+  - [ ] Replace SHA256 hash verification with a less resource-intensive method.
+    - [ ] Research and evaluate the use of CRC32, or equivalent alternatives, for quick file comparison.
+    - [ ] Implement CRC32 or chosen alternative for file integrity checks aimed at duplication avoidance rather than secure cryptographic verification.
