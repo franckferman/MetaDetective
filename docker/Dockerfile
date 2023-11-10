@@ -1,7 +1,7 @@
 FROM debian:bullseye-slim
 
 LABEL maintainer="Franck FERMAN <contact@franckferman.fr>" \
-      description="Unleash Metadata Intelligence with MetaDetective. Your Assistant Beyond Metagoofil." \
+      description="Unleash Metadata Intelligence with MetaDetective." \
       metadetective_version="1.0.9" \
       docker_image_version="1.0.2"
 
