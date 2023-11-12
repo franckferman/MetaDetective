@@ -31,3 +31,11 @@
   - [ ] Replace SHA256 hash verification with a less resource-intensive method.
     - [ ] Research and evaluate the use of CRC32, or equivalent alternatives, for quick file comparison.
     - [ ] Implement CRC32 or chosen alternative for file integrity checks aimed at duplication avoidance rather than secure cryptographic verification.
+
+### Website Enhancement
+
+- [ ] **Incorporate Metadata Example Files**
+  - [ ] Host a set of diverse example files embedded with metadata on the MetaDetective site.
+    - [ ] Ensure these example files cover a wide range of metadata scenarios to showcase MetaDetective’s capabilities.
+  - [ ] Replace references to "https://example.com" in documentation and demos with links to these metadata example files on the MetaDetective site.
+    - [ ] Update documentation and tutorials to direct users to these specific examples for more relevant and practical demonstrations of MetaDetective's functionalities.
