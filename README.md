@@ -46,6 +46,7 @@ https://github.com/franckferman/MetaDetective/assets/73023545/7b245f87-37e2-40b7
     <li><a href="#-usage">🎮 Usage</a></li>
     <li><a href="#-troubleshooting">❗ Troubleshooting</a></li>
     <li><a href="#-contributing">🤝 Contributing</a></li>
+    <li><a href="#-legal-disclaimer">⚖️ Legal Disclaimer</a></li>
     <li><a href="#-star-evolution">🌠 Star Evolution</a></li>
     <li><a href="#-license">📜 License</a></li>
     <li><a href="#-contact">📞 Contact</a></li>
@@ -185,10 +186,22 @@ Ensure both the URL and `--scan` flags are used.
 python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://example.com
 ```
 
+- **Scans for specific file types and displays related statistics**: 
+Ensure both the URL and `--scan` flags are used and use `--extensions` followed by a list of desired file types (e.g., pdf docx png).
+```bash
+python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://example.com --extensions pdf docx xlsx pptx
+```
+
 - **Downloading web content**:
 Indicate the desired directory using `--download-dir` and provide the target URL.
 ```bash
 python3 src/MetaDetective/MetaDetective.py --scraping --download-dir ~ --url https://example.com
+```
+
+- **Downloads web content of specific file types**:
+Indicate the desired directory using `--download-dir`, provide the target URL and desired file types with `--extensions`.
+```bash
+python3 src/MetaDetective/MetaDetective.py --scraping --download-dir ~ --url https://example.com --extensions pdf docx xlsx pptx
 ```
 
 - **Adjusting scraping depth**:
@@ -308,6 +321,18 @@ Encountering issues? Don't worry. If you come across any problems or have questi
 ## 🤝 Contributing
 
 We truly appreciate and welcome community involvement. Your contributions, feedback, and suggestions play a crucial role in improving the project for everyone. If you're interested in contributing or have ideas for enhancements, please feel free to open an issue or submit a pull request on our GitHub repository. Every contribution, no matter how big or small, is highly valued and greatly appreciated!
+
+<p align="right">(<a href="#top">🔼 Back to top</a>)</p>
+
+## ⚖️ Legal Disclaimer
+
+Please be aware that the use of the `MetaDetective` tool may be subject to specific laws and regulations in your country or region. Before using this tool, it is your responsibility to ensure that its use is in compliance with the laws applicable in your jurisdiction.
+
+The creator of `MetaDetective` cannot be held responsible for any improper or illegal use of this tool. By using `MetaDetective`, you acknowledge and agree that you are solely responsible for complying with local laws and regulations.
+
+In some instances, the use of `MetaDetective` might be justified for legitimate purposes such as protection against authoritarian regimes or for survival matters. However, it is strongly advised to take all necessary measures to protect yourself and to abide by the law.
+
+By using `MetaDetective`, you acknowledge having read this disclaimer and agree to act accordingly. The creator of `MetaDetective` does not in any way endorse the use of this tool for illegal or harmful purposes.
 
 <p align="right">(<a href="#top">🔼 Back to top</a>)</p>
 
