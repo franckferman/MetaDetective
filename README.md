@@ -5,7 +5,7 @@
 [![Forks][forks-shield]](https://github.com/franckferman/MetaDetective/network/members)
 [![Stargazers][stars-shield]](https://github.com/franckferman/MetaDetective/stargazers)
 [![Issues][issues-shield]](https://github.com/franckferman/MetaDetective/issues)
-[![MIT License][license-shield]](https://github.com/franckferman/MetaDetective/blob/stable/LICENSE)
+[![License][license-shield]](https://github.com/franckferman/MetaDetective/blob/stable/LICENSE)
 [![GitHub unittest Workflow Status][unittest-shield]](https://github.com/franckferman/MetaDetective/actions/workflows/unittest.yml)
 
 <!-- Logo -->
