@@ -10,7 +10,7 @@
 
 <!-- Logo -->
 <a href="https://github.com/franckferman/MetaDetective">
-  <img src="https://raw.githubusercontent.com/00din/ok.ru/main/docs/github/graphical_resources/Logo-Without_background-OK.RU.png?token=GHSAT0AAAAAACLJE7WI72A73XISEZNR4KISZL4JSHA" alt="MetaDetective Logo" width="auto" height="auto">
+  <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/Logo-Without_background-MetaDetective.png" alt="MetaDetective Logo" width="auto" height="auto">
 </a>
 
 <!-- Title & Tagline -->
