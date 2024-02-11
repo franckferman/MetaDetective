@@ -207,7 +207,7 @@ python3 src/MetaDetective/MetaDetective.py --scraping --download-dir ~ --url htt
 - **Adjusting scraping depth**:
 Use the `--depth` flag to specify how deeply the scraper should navigate through links.
 ```bash
-python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://aulnay-sous-bois.fr --depth 1
+python3 src/MetaDetective/MetaDetective.py --scraping --scan --url https://example.com --depth 1
 ```
 
 ##### **Additional Flags**:
