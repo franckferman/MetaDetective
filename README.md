@@ -1,5 +1,16 @@
 <div id="top" align="center">
 
+<!-- Sponsorship Highlight -->
+<p align="center">
+  <a href="https://iproyal.com/?r=848799" target="_blank">
+    <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/IPRoyal-Logo_Transparent_500x500.png" alt="Sponsored by IPRoyal" width="200">
+  </a>
+</p>
+<p align="center"><b>This project is supported by <a href="https://iproyal.com/?r=848799">IPRoyal</a></b><br/>
+<sub>Trusted proxy services for scraping, OSINT and cybersecurity research.</sub></p>
+
+</br>
+
 <!-- Shields Header -->
 [![Contributors][contributors-shield]](https://github.com/franckferman/MetaDetective/graphs/contributors)
 [![Forks][forks-shield]](https://github.com/franckferman/MetaDetective/network/members)
