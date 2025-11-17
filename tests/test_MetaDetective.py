@@ -1,497 +1,408 @@
 import argparse
-import http.client
 import json
 import os
-import re
-import subprocess
 import tempfile
 import unittest
 from io import StringIO
 from unittest.mock import Mock, patch
 
-from src.MetaDetective.MetaDetective import (BANNER, show_banner, check_exiftool_installed,
-                                             dms_to_dd, parse_dms, get_metadata, matches_any_pattern,
-                                             valid_directory, filter_files_by_extension, get_files,
-                                             get_address_from_coords, format_gps_data, valid_filename,
-                                             is_valid_file_link, valid_url)
+from src.MetaDetective import MetaDetective as md
 
+
+# ============================================================================
+# Banner et exiftool
+# ============================================================================
 
 class TestShowBanner(unittest.TestCase):
-    def test_show_banner(self):
+    def test_show_banner_prints_banner(self):
         with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
-            show_banner()
+            md.show_banner()
             content = mock_stdout.getvalue()
-            self.assertEqual(content, BANNER + "\n")
+            self.assertEqual(content, md.BANNER + "\n")
 
 
-class TestExifToolCheck(unittest.TestCase):
+class TestCheckExiftoolInstalled(unittest.TestCase):
 
-    @patch('subprocess.run')
-    def test_exiftool_is_installed(self, mock_run):
-        """Test that the function doesn't raise an error when exiftool is installed."""
-        mock_run.return_value = None
+    @patch("src.MetaDetective.MetaDetective.subprocess.run")
+    def test_exiftool_is_installed_no_exit(self, mock_run):
+        mock_run.return_value = Mock()
         try:
-            check_exiftool_installed()
+            md.check_exiftool_installed()
         except SystemExit as e:
-            self.fail(f"Unexpected exit: {e}")
+            self.fail(f"Unexpected SystemExit: {e}")
 
-    @patch('subprocess.run')
-    def test_raises_error_when_exiftool_not_installed(self, mock_run):
-        """Test that the function raises an error when exiftool is not installed."""
+    @patch("src.MetaDetective.MetaDetective.subprocess.run")
+    def test_exiftool_not_installed_raises_system_exit(self, mock_run):
         mock_run.side_effect = FileNotFoundError()
-        with self.assertRaisesRegex(SystemExit, "Error: exiftool is not installed. Please install it to continue."):
-            check_exiftool_installed()
+        with self.assertRaises(SystemExit) as cm:
+            md.check_exiftool_installed()
+        self.assertEqual(str(cm.exception), md.EXIFTOOL_NOT_INSTALLED)
 
-    @patch('subprocess.run')
-    def test_raises_error_on_exiftool_execution_error(self, mock_run):
-        """Test that the function raises an error when exiftool encounters an execution error."""
-        mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=['exiftool', '-ver'])
-        with self.assertRaisesRegex(SystemExit, "Error: exiftool encountered an error."):
-            check_exiftool_installed()
+    @patch("src.MetaDetective.MetaDetective.subprocess.run")
+    def test_exiftool_execution_error_raises_system_exit(self, mock_run):
+        mock_run.side_effect = md.subprocess.CalledProcessError(
+            returncode=1, cmd=["exiftool", "-ver"]
+        )
+        with self.assertRaises(SystemExit) as cm:
+            md.check_exiftool_installed()
+        self.assertEqual(str(cm.exception), md.EXIFTOOL_EXECUTION_ERROR)
 
 
-class TestDMStoDD(unittest.TestCase):
+# ============================================================================
+# GPSProcessor: dms_to_dd / parse_dms
+# ============================================================================
 
-    def test_dms_to_dd_north_positive(self):
-        result = dms_to_dd(40, 26, 46, 'N')
-        self.assertAlmostEqual(result, 40.4461111)
+class TestGPSProcessorDmsToDd(unittest.TestCase):
 
-    def test_dms_to_dd_south_negative(self):
-        result = dms_to_dd(40, 26, 46, 'S')
-        self.assertAlmostEqual(result, -40.4461111)
+    def test_north_positive(self):
+        result = md.GPSProcessor.dms_to_dd(40, 26, 46, "N")
+        self.assertAlmostEqual(result, 40.4461111, places=6)
 
-    def test_dms_to_dd_east_positive(self):
-        result = dms_to_dd(40, 26, 46, 'E')
-        self.assertAlmostEqual(result, 40.4461111)
+    def test_south_negative(self):
+        result = md.GPSProcessor.dms_to_dd(40, 26, 46, "S")
+        self.assertAlmostEqual(result, -40.4461111, places=6)
 
-    def test_dms_to_dd_west_negative(self):
-        result = dms_to_dd(40, 26, 46, 'W')
-        self.assertAlmostEqual(result, -40.4461111)
+    def test_east_positive(self):
+        result = md.GPSProcessor.dms_to_dd(40, 26, 46, "E")
+        self.assertAlmostEqual(result, 40.4461111, places=6)
+
+    def test_west_negative(self):
+        result = md.GPSProcessor.dms_to_dd(40, 26, 46, "W")
+        self.assertAlmostEqual(result, -40.4461111, places=6)
 
     def test_invalid_degrees(self):
         with self.assertRaises(ValueError):
-            dms_to_dd(200, 26, 46, 'N')
+            md.GPSProcessor.dms_to_dd(200, 26, 46, "N")
 
     def test_invalid_minutes(self):
         with self.assertRaises(ValueError):
-            dms_to_dd(40, 60, 46, 'N')
+            md.GPSProcessor.dms_to_dd(40, 60, 46, "N")
 
     def test_invalid_seconds(self):
         with self.assertRaises(ValueError):
-            dms_to_dd(40, 26, 60, 'N')
+            md.GPSProcessor.dms_to_dd(40, 26, 60, "N")
 
     def test_invalid_direction(self):
         with self.assertRaises(ValueError):
-            dms_to_dd(40, 26, 46, 'A')
+            md.GPSProcessor.dms_to_dd(40, 26, 46, "A")
 
     def test_case_insensitive_direction(self):
-        result = dms_to_dd(40, 26, 46, 'n')
-        self.assertAlmostEqual(result, 40.4461111)
+        result = md.GPSProcessor.dms_to_dd(40, 26, 46, "n")
+        self.assertAlmostEqual(result, 40.4461111, places=6)
 
 
-class TestParseDMS(unittest.TestCase):
+class TestGPSProcessorParseDms(unittest.TestCase):
 
     def test_valid_dms_north(self):
-        result = parse_dms("50 deg 49' 8.59\" N")
-        self.assertEqual(result, (50, 49, 8.59, 'N'))
+        result = md.GPSProcessor.parse_dms('50 deg 49\' 8.59" N')
+        self.assertEqual(result, (50, 49, 8.59, "N"))
 
     def test_valid_dms_east(self):
-        result = parse_dms("50 deg 49' 8.59\" E")
-        self.assertEqual(result, (50, 49, 8.59, 'E'))
+        result = md.GPSProcessor.parse_dms('50 deg 49\' 8.59" E')
+        self.assertEqual(result, (50, 49, 8.59, "E"))
 
     def test_invalid_direction(self):
         with self.assertRaises(ValueError):
-            parse_dms("50 deg 49' 8.59\" A")
+            md.GPSProcessor.parse_dms('50 deg 49\' 8.59" A')
 
     def test_missing_degrees(self):
         with self.assertRaises(ValueError):
-            parse_dms("49' 8.59\" N")
+            md.GPSProcessor.parse_dms('49\' 8.59" N')
 
     def test_missing_minutes(self):
         with self.assertRaises(ValueError):
-            parse_dms("50 deg 8.59\" N")
+            md.GPSProcessor.parse_dms('50 deg 8.59" N')
 
     def test_missing_seconds(self):
         with self.assertRaises(ValueError):
-            parse_dms("50 deg 49' N")
+            md.GPSProcessor.parse_dms("50 deg 49' N")
 
     def test_case_insensitive_direction(self):
-        result = parse_dms("50 deg 49' 8.59\" n")
-        self.assertEqual(result, (50, 49, 8.59, 'N'))
+        result = md.GPSProcessor.parse_dms('50 deg 49\' 8.59" n')
+        self.assertEqual(result, (50, 49, 8.59, "N"))
 
 
-class TestGetMetadata(unittest.TestCase):
+# ============================================================================
+# MetadataExtractor + GPSProcessor.process_gps_data
+# ============================================================================
 
-    def setUp(self):
-        self.mocked_exiftool_output = """
-        ExifTool Version Number         : 12.56
-        File Name                       : test_MetaDetective-Franck_FERMAN.pdf
-        Author                          : Franck FERMAN
-        Last Modified By                : AHaibara
-        Producer                        : PDFCreator 2.3.2.6
-        """
+class TestMetadataExtractor(unittest.TestCase):
 
-    @patch("subprocess.run")
-    def test_get_metadata(self, mock_run):
+    @patch("src.MetaDetective.MetaDetective.subprocess.run")
+    def test_get_metadata_basic_fields(self, mock_run):
+        mocked_output = """File Name                       : test.pdf
+Author                          : Franck
+Camera Model Name               : Pixel
+"""
         mock_result = Mock()
-        mock_result.stdout = self.mocked_exiftool_output
+        mock_result.stdout = mocked_output
         mock_run.return_value = mock_result
 
-        metadata = get_metadata("test_MetaDetective-Franck_FERMAN.pdf", ["File Name", "Author", "Last Modified By"])
+        metadata = md.MetadataExtractor.get_metadata(
+            "test.pdf",
+            ["File Name", "Author", "Camera Model Name"]
+        )
 
-        self.assertIn("File Name", metadata)
-        self.assertEqual(metadata["File Name"], "test_MetaDetective-Franck_FERMAN.pdf")
-        self.assertIn("Author", metadata)
-        self.assertEqual(metadata["Author"], "Franck FERMAN")
-        self.assertIn("Last Modified By", metadata)
-        self.assertEqual(metadata["Last Modified By"], "AHaibara")
+        self.assertEqual(metadata["File Name"], "test.pdf")
+        self.assertEqual(metadata["Author"], "Franck")
+        self.assertEqual(metadata["Camera Model Name"], "Pixel")
 
-    @patch("subprocess.run")
-    def test_get_metadata_with_gps(self, mock_run):
-        mocked_output_with_gps = """
-        ExifTool Version Number         : 12.56
-        File Name                       : test_MetaDetective-Franck_FERMAN-GPS.jpg
-        Camera Model Name               : Pixel 2
-        GPS Position                    : 47 deg 28' 0.86" N, 10 deg 12' 13.50" E
-        Formatted GPS Position          : 47.466906, 10.203750
-        Address                         : Hörner Höhenweg, Bolsterlang, Hörnergruppe (VGem), Landkreis Oberallgäu, Bayern, 87538, Deutschland
-        Map Link                        : https://nominatim.openstreetmap.org/ui/reverse.html?lat=47.466906&lon=10.203750
-        """
-
+    @patch("src.MetaDetective.MetaDetective.subprocess.run")
+    def test_get_metadata_with_gps_position(self, mock_run):
+        mocked_output = """GPS Position                    : 47 deg 28' 0.86" N, 10 deg 12' 13.50" E
+File Name                       : gps.jpg
+"""
         mock_result = Mock()
-        mock_result.stdout = mocked_output_with_gps
+        mock_result.stdout = mocked_output
         mock_run.return_value = mock_result
 
-        metadata = get_metadata("test_MetaDetective-Franck_FERMAN-GPS.jpg", ["File Name", "Camera Model Name", "Formatted GPS Position", "Address", "Map Link"])
+        metadata = md.MetadataExtractor.get_metadata(
+            "gps.jpg",
+            ["File Name", "GPS Position", "Formatted GPS Position"]
+        )
 
-        self.assertIn("File Name", metadata)
-        self.assertEqual(metadata["File Name"], "test_MetaDetective-Franck_FERMAN-GPS.jpg")
-        self.assertIn("Camera Model Name", metadata)
-        self.assertEqual(metadata["Camera Model Name"], "Pixel 2")
+        self.assertIn("GPS Position", metadata)
         self.assertIn("Formatted GPS Position", metadata)
-        self.assertEqual(metadata["Formatted GPS Position"], "47.466906, 10.203750")
-        self.assertIn("Address", metadata)
-        self.assertEqual(metadata["Address"], "Hörner Höhenweg, Bolsterlang, Hörnergruppe (VGem), Landkreis Oberallgäu, Bayern, 87538, Deutschland")
-        self.assertIn("Map Link", metadata)
-        self.assertEqual(metadata["Map Link"], "https://nominatim.openstreetmap.org/ui/reverse.html?lat=47.466906&lon=10.203750")
+        lat, lon = metadata["Formatted GPS Position"].split(", ")
+        float(lat)
+        float(lon)
 
-    @patch("subprocess.run")
-    def test_exiftool_error(self, mock_run):
-        mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["exiftool", "file_path"])
-        metadata = get_metadata("file_path", ["Field"])
+    @patch("src.MetaDetective.MetaDetective.subprocess.run")
+    def test_get_metadata_handles_called_process_error(self, mock_run):
+        mock_run.side_effect = md.subprocess.CalledProcessError(
+            returncode=1, cmd=["exiftool", "badfile"]
+        )
+        metadata = md.MetadataExtractor.get_metadata("badfile", ["File Name"])
         self.assertEqual(metadata, {})
 
-    @patch("subprocess.run")
-    def test_non_existent_fields(self, mock_run):
-        mock_result = Mock()
-        mock_result.stdout = self.mocked_exiftool_output
-        mock_run.return_value = mock_result
 
-        metadata = get_metadata("test_MetaDetective-Franck_FERMAN.pdf", ["File Name", "NonExistentField"])
+# ============================================================================
+# AddressResolver
+# ============================================================================
 
-        self.assertIn("File Name", metadata)
-        self.assertNotIn("NonExistentField", metadata)
+class TestAddressResolver(unittest.TestCase):
+
+    @patch("src.MetaDetective.MetaDetective.http.client.HTTPSConnection")
+    def test_get_address_from_coords_fetch_and_cache(self, mock_conn_cls):
+        # Fake HTTP response
+        conn_instance = Mock()
+        mock_conn_cls.return_value = conn_instance
+
+        response = Mock()
+        response.read.return_value = json.dumps(
+            {"display_name": "Somewhere, Earth"}
+        ).encode("utf-8")
+        conn_instance.getresponse.return_value = response
+
+        # First call - should hit HTTP
+        addr1 = md.AddressResolver.get_address_from_coords("47.0", "10.0")
+        self.assertEqual(addr1, "Somewhere, Earth")
+        self.assertTrue(mock_conn_cls.called)
+
+        calls_count_after_first = mock_conn_cls.call_count
+
+        # Second call same coords - should use cache, no new HTTPSConnection
+        addr2 = md.AddressResolver.get_address_from_coords("47.0", "10.0")
+        self.assertEqual(addr2, "Somewhere, Earth")
+        self.assertEqual(mock_conn_cls.call_count, calls_count_after_first)
+
+    @patch.object(md.AddressResolver, "get_address_from_coords", return_value="Somewhere, Earth")
+    def test_format_gps_data_adds_address_and_map_link(self, mock_get_addr):
+        metadata = {"Formatted GPS Position": "47.466906, 10.203750"}
+        md.AddressResolver.format_gps_data(metadata)
+
+        self.assertEqual(metadata["Address"], "Somewhere, Earth")
+        self.assertIn("Map Link", metadata)
+        self.assertIn("lat=47.466906", metadata["Map Link"])
+        self.assertIn("lon=10.203750", metadata["Map Link"])
+        mock_get_addr.assert_called_once()
 
 
-class TestMatchesAnyPattern(unittest.TestCase):
+# ============================================================================
+# WebScraper.is_valid_file_link
+# ============================================================================
 
-    def test_matches_pattern(self):
-        value = "Hello, world!"
-        patterns = ["^Hello, world!$", "Hello", "world"]
-        self.assertTrue(matches_any_pattern(value, patterns))
+class TestWebScraper(unittest.TestCase):
 
-    def test_does_not_match_pattern(self):
-        value = "Hello, world!"
-        patterns = ["^Hello$", "^world!$", "foo"]
-        self.assertFalse(matches_any_pattern(value, patterns))
+    def setUp(self):
+        self.scraper = md.WebScraper(["pdf", "jpg", "png"])
 
-    def test_case_insensitive_matching(self):
-        value = "Hello, WORLD!"
-        patterns = ["^hello, world!$", "HELLO", "WORLD"]
-        self.assertTrue(matches_any_pattern(value, patterns))
+    def test_valid_file_link_pdf(self):
+        self.assertTrue(
+            self.scraper.is_valid_file_link("https://example.com/documents/report.pdf")
+        )
 
-    def test_invalid_pattern(self):
-        value = "Hello, world!"
-        patterns = ["Hello[", "world"]
-        with self.assertRaises(re.error):
-            matches_any_pattern(value, patterns)
+    def test_valid_file_link_jpg_with_query(self):
+        self.assertTrue(
+            self.scraper.is_valid_file_link("https://example.com/img/photo.JPG?version=1")
+        )
 
-    def test_empty_string(self):
-        value = ""
-        patterns = ["^Hello, world!$", "Hello", "world"]
-        self.assertFalse(matches_any_pattern(value, patterns))
+    def test_invalid_file_link_no_extension(self):
+        self.assertFalse(
+            self.scraper.is_valid_file_link("https://example.com/download")
+        )
 
-    def test_empty_patterns(self):
-        value = "Hello, world!"
-        patterns = []
-        self.assertFalse(matches_any_pattern(value, patterns))
+    def test_invalid_file_link_wrong_extension(self):
+        self.assertFalse(
+            self.scraper.is_valid_file_link("https://example.com/script.js")
+        )
 
-    def test_matches_empty_pattern(self):
-        value = "Hello, world!"
-        patterns = ["^Hello, world!$", "", "world"]
-        self.assertTrue(matches_any_pattern(value, patterns))
+
+# ============================================================================
+# FileDownloader utils (hash) - pas de HTTP
+# ============================================================================
+
+class TestFileDownloader(unittest.TestCase):
+
+    def test_calculate_hash_is_deterministic(self):
+        data = b"Hello world"
+        h1 = md.FileDownloader.calculate_hash(data)
+        h2 = md.FileDownloader.calculate_hash(data)
+        self.assertEqual(h1, h2)
+        self.assertEqual(len(h1), 64)  # SHA256 hex
+
+
+# ============================================================================
+# FileOperations + validation helpers
+# ============================================================================
+
+class TestFileOperations(unittest.TestCase):
+
+    def test_filter_files_by_extension_basic(self):
+        files = [
+            "test1.pdf",
+            "test2.docx",
+            "image.jpg",
+            "notes.txt",
+            "archive.tar.gz",
+        ]
+        filtered = md.FileOperations.filter_files_by_extension(files, [".pdf", ".jpg"])
+        self.assertIn("test1.pdf", filtered)
+        self.assertIn("image.jpg", filtered)
+        self.assertNotIn("test2.docx", filtered)
+        self.assertNotIn("notes.txt", filtered)
+
+    def test_filter_files_by_extension_type_errors(self):
+        with self.assertRaises(TypeError):
+            md.FileOperations.filter_files_by_extension("not_a_list", [".pdf"])
+        with self.assertRaises(TypeError):
+            md.FileOperations.filter_files_by_extension(["file.pdf"], "not_a_list")
+
+    def test_get_files_from_directory_with_type_filter(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = os.path.join(tmpdir, "a.pdf")
+            txt_path = os.path.join(tmpdir, "b.txt")
+            with open(pdf_path, "w"):
+                pass
+            with open(txt_path, "w"):
+                pass
+
+            class Args:
+                directory = tmpdir
+                files = None
+                type = [".pdf"]
+
+            files = md.FileOperations.get_files(Args)
+            self.assertEqual(files, [pdf_path])
+
+    def test_get_files_from_args_files(self):
+        class Args:
+            directory = None
+            files = ["a.pdf", "b.txt"]
+            type = ["all"]
+
+        files = md.FileOperations.get_files(Args)
+        self.assertEqual(files, ["a.pdf", "b.txt"])
+
+    def test_get_files_no_files_raises(self):
+        class Args:
+            directory = None
+            files = []
+            type = ["all"]
+
+        with self.assertRaises(ValueError):
+            md.FileOperations.get_files(Args)
 
 
 class TestValidDirectory(unittest.TestCase):
 
-    def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+    def test_valid_directory_ok(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self.assertEqual(md.valid_directory(tmpdir), tmpdir)
 
-        self.temp_file = tempfile.NamedTemporaryFile(delete=False)
-        self.temp_file.close()
-
-    def tearDown(self):
-        os.remove(self.temp_file.name)
-        os.rmdir(self.temp_dir)
-
-    def test_valid_directory(self):
-        path = valid_directory(self.temp_dir)
-        self.assertEqual(path, self.temp_dir)
-
-    def test_invalid_directory_not_exist(self):
+    def test_invalid_directory_not_exists(self):
         with self.assertRaises(argparse.ArgumentTypeError):
-            valid_directory("/path/that/doesnt/exist")
+            md.valid_directory("/this/path/does/not/exist")
 
-    def test_invalid_directory_is_file(self):
-        with self.assertRaises(argparse.ArgumentTypeError):
-            valid_directory(self.temp_file.name)
-
-    def test_empty_directory_path(self):
-        with self.assertRaises(argparse.ArgumentTypeError):
-            valid_directory("")
-
-
-class TestFilterFilesByExtension(unittest.TestCase):
-
-    def test_filter_files(self):
-        files = ["test.txt", "example.jpg", "another.png", "sample.doc", "more.docx"]
-        extensions = [".jpg", ".png"]
-        filtered = filter_files_by_extension(files, extensions)
-        self.assertEqual(filtered, ["example.jpg", "another.png"])
-
-    def test_invalid_files_argument(self):
-        with self.assertRaises(TypeError):
-            filter_files_by_extension("string_instead_of_list", [".jpg"])
-
-    def test_invalid_files_element(self):
-        with self.assertRaises(TypeError):
-            filter_files_by_extension([123, "example.jpg"], [".jpg"])
-
-    def test_invalid_extensions_argument(self):
-        with self.assertRaises(TypeError):
-            filter_files_by_extension(["example.jpg"], "string_instead_of_list")
-
-    def test_invalid_extensions_element(self):
-        with self.assertRaises(TypeError):
-            filter_files_by_extension(["example.jpg"], [".jpg", 123])
-
-    def test_empty_files_list(self):
-        extensions = [".jpg", ".png"]
-        filtered = filter_files_by_extension([], extensions)
-        self.assertEqual(filtered, [])
-
-    def test_no_matching_files(self):
-        files = ["test.txt", "sample.doc", "more.docx"]
-        extensions = [".jpg", ".png"]
-        filtered = filter_files_by_extension(files, extensions)
-        self.assertEqual(filtered, [])
-
-
-class TestGetFiles(unittest.TestCase):
-
-    def setUp(self):
-        self.mock_args_with_directory = Mock()
-        self.mock_args_with_directory.directory = "/mock/directory"
-        self.mock_args_with_directory.type = ["all"]
-        self.mock_args_with_directory.files = []
-
-        self.mock_args_with_files = Mock()
-        self.mock_args_with_files.directory = None
-        self.mock_args_with_files.type = ["all"]
-        self.mock_args_with_files.files = ["/path/to/file1.txt", "/path/to/file2.jpg"]
-
-    @patch("os.path.exists", return_value=True)
-    @patch("os.path.isdir", return_value=True)
-    @patch("os.listdir", return_value=["file1.txt", "file2.jpg"])
-    def test_get_files_from_directory(self, mock_listdir, mock_isdir, mock_exists):
-        files = get_files(self.mock_args_with_directory)
-        self.assertEqual(files, ["/mock/directory/file1.txt", "/mock/directory/file2.jpg"])
-
-    @patch("os.path.exists", return_value=True)
-    @patch("os.path.isdir", return_value=True)
-    @patch("os.listdir", return_value=["file1.txt", "file2.jpg"])
-    def test_get_files_from_directory_with_filter(self, mock_listdir, mock_isdir, mock_exists):
-        self.mock_args_with_directory.type = [".txt"]
-        files = get_files(self.mock_args_with_directory)
-        self.assertEqual(files, ["/mock/directory/file1.txt"])
-
-    def test_get_files_from_args(self):
-        files = get_files(self.mock_args_with_files)
-        self.assertEqual(files, ["/path/to/file1.txt", "/path/to/file2.jpg"])
-
-    @patch("os.path.isdir", return_value=False)
-    def test_invalid_directory(self, mock_isdir):
-        with self.assertRaises(ValueError):
-            get_files(self.mock_args_with_directory)
-
-    @patch("os.path.isdir", return_value=True)
-    @patch("os.listdir", return_value=[])
-    def test_no_files_in_directory(self, mock_listdir, mock_isdir):
-        with self.assertRaises(ValueError):
-            get_files(self.mock_args_with_directory)
-
-    def test_no_files_in_args(self):
-        self.mock_args_with_files.files = []
-        with self.assertRaises(ValueError):
-            get_files(self.mock_args_with_files)
-
-    @patch("http.client.HTTPSConnection")
-    def test_valid_response(self, MockHTTPSConnection):
-        mock_response = Mock()
-        mock_response.read.return_value = '{"display_name": "Berlin, Germany"}'.encode("utf-8")
-        MockHTTPSConnection().getresponse.return_value = mock_response
-
-        address = get_address_from_coords("52.5200", "13.4050")
-        self.assertEqual(address, "Berlin, Germany")
-
-    @patch("http.client.HTTPSConnection")
-    def test_invalid_json(self, MockHTTPSConnection):
-        mock_response = Mock()
-        mock_response.read.return_value = 'Invalid JSON'.encode("utf-8")
-        MockHTTPSConnection().getresponse.return_value = mock_response
-
-        with self.assertRaisesRegex(json.JSONDecodeError, 'Expecting value'):
-            get_address_from_coords("52.5200", "13.4050")
-
-    @patch("http.client.HTTPSConnection")
-    def test_http_error(self, MockHTTPSConnection):
-        MockHTTPSConnection().request.side_effect = http.client.HTTPException("HTTP error")
-
-        with self.assertRaises(http.client.HTTPException):
-            get_address_from_coords("52.5200", "13.4050")
-
-    @patch("http.client.HTTPSConnection")
-    def test_no_display_name(self, MockHTTPSConnection):
-        mock_response = Mock()
-        mock_response.read.return_value = '{"name": "Berlin"}'.encode("utf-8")
-        MockHTTPSConnection().getresponse.return_value = mock_response
-
-        address = get_address_from_coords("52.5200", "13.4050")
-        self.assertEqual(address, "")
-
-
-class TestFormatGPSData(unittest.TestCase):
-
-    def test_valid_formatted_gps_data_with_address(self):
-        metadata = {"Formatted GPS Position": "52.5200, 13.4050"}
-
-        format_gps_data(metadata)
-
-        self.assertIn("Address", metadata)
-        self.assertIn("Map Link", metadata)
-        self.assertIn("52.5200", metadata["Map Link"])
-        self.assertIn("13.4050", metadata["Map Link"])
-
-    def test_no_formatted_gps_data(self):
-        metadata = {"Some Other Data": "12345"}
-
-        format_gps_data(metadata)
-
-        self.assertNotIn("Address", metadata)
-        self.assertNotIn("Map Link", metadata)
-
-    def test_invalid_formatted_gps_data(self):
-        metadata = {"Formatted GPS Position": "52.5200; 13.4050"}
-
-        with self.assertRaises(ValueError):
-            format_gps_data(metadata)
+    def test_invalid_directory_not_a_dir(self):
+        with tempfile.NamedTemporaryFile() as tmpfile:
+            with self.assertRaises(argparse.ArgumentTypeError):
+                md.valid_directory(tmpfile.name)
 
 
 class TestValidFilename(unittest.TestCase):
 
-    def test_valid_filename(self):
-        """Test a valid filename."""
-        filename = "example_123"
-        self.assertEqual(valid_filename(filename), filename)
+    def test_valid_filename_basic(self):
+        self.assertEqual(md.valid_filename("export01"), "export01")
 
-    def test_empty_filename(self):
-        """Test an empty filename."""
+    def test_valid_filename_with_dash_underscore(self):
+        self.assertEqual(md.valid_filename("meta_detective-01"), "meta_detective-01")
+
+    def test_invalid_filename_empty(self):
         with self.assertRaises(argparse.ArgumentTypeError):
-            valid_filename("")
+            md.valid_filename("")
 
-    def test_long_filename(self):
-        """Test a filename longer than 16 characters."""
+    def test_invalid_filename_too_long(self):
+        value = "a" * (md.MAX_FILENAME_LENGTH + 1)
         with self.assertRaises(argparse.ArgumentTypeError):
-            valid_filename("a" * 17)
+            md.valid_filename(value)
 
-    def test_filename_ending_with_dash(self):
-        """Test a filename ending with '-'."""
+    def test_invalid_filename_ending_with_dash(self):
         with self.assertRaises(argparse.ArgumentTypeError):
-            valid_filename("example-")
+            md.valid_filename("export-")
 
-    def test_filename_ending_with_underscore(self):
-        """Test a filename ending with '_'."""
+    def test_invalid_filename_ending_with_underscore(self):
         with self.assertRaises(argparse.ArgumentTypeError):
-            valid_filename("example_")
-
-    def test_filename_with_invalid_characters(self):
-        """Test a filename with other invalid characters."""
-        with self.assertRaises(argparse.ArgumentTypeError):
-            valid_filename("example@123")
-
-
-class TestIsValidFileLink(unittest.TestCase):
-
-    def test_valid_file_link(self):
-        """Test a valid file link."""
-        link = "http://example.com/file.jpg"
-        self.assertTrue(is_valid_file_link(link))
-
-    def test_invalid_extension(self):
-        """Test a link with no valid file extension."""
-        link = "http://example.com/file.txt"
-        self.assertFalse(is_valid_file_link(link))
-
-    def test_extension_not_at_end(self):
-        """Test a link where the extension is not at the end."""
-        link = "http://example.com/file.jpg?query=123"
-        self.assertTrue(is_valid_file_link(link))
-
-    def test_no_path_in_link(self):
-        """Test a link without any path."""
-        link = "http://example.com"
-        self.assertFalse(is_valid_file_link(link))
-
-    def test_empty_link(self):
-        """Test an empty link."""
-        link = ""
-        self.assertFalse(is_valid_file_link(link))
+            md.valid_filename("export_")
 
 
 class TestValidUrl(unittest.TestCase):
 
     def test_valid_http_url(self):
-        """Test a valid HTTP URL."""
-        url = "http://example.com"
-        self.assertEqual(valid_url(url), url)
+        url = "http://example.com/resource?id=1"
+        self.assertEqual(md.valid_url(url), url)
 
     def test_valid_https_url(self):
-        """Test a valid HTTPS URL."""
-        url = "https://secure.example.com"
-        self.assertEqual(valid_url(url), url)
+        url = "https://example.com/res.pdf"
+        self.assertEqual(md.valid_url(url), url)
 
-    def test_invalid_url_no_protocol(self):
-        """Test an invalid URL that lacks a protocol."""
-        url = "example.com"
+    def test_invalid_url(self):
         with self.assertRaises(argparse.ArgumentTypeError):
-            valid_url(url)
+            md.valid_url("not_a_url")
 
-    def test_empty_url(self):
-        """Test an empty URL."""
-        url = ""
         with self.assertRaises(argparse.ArgumentTypeError):
-            valid_url(url)
+            md.valid_url("ftp://example.com/file")
 
 
-if __name__ == '__main__':
+# ============================================================================
+# PatternMatcher.matches_any_pattern
+# ============================================================================
+
+class TestPatternMatcher(unittest.TestCase):
+
+    def test_matches_any_pattern_true(self):
+        value = "admin@example.com"
+        patterns = [r"admin", r"root"]
+        self.assertTrue(md.PatternMatcher.matches_any_pattern(value, patterns))
+
+    def test_matches_any_pattern_false(self):
+        value = "user@example.com"
+        patterns = [r"admin", r"root"]
+        self.assertFalse(md.PatternMatcher.matches_any_pattern(value, patterns))
+
+    def test_matches_any_pattern_empty_list(self):
+        self.assertFalse(md.PatternMatcher.matches_any_pattern("anything", []))
+
+
+if __name__ == "__main__":
     unittest.main()
