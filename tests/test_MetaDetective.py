@@ -346,7 +346,8 @@ class TestValidFilename(unittest.TestCase):
         self.assertEqual(md.valid_filename("export01"), "export01")
 
     def test_valid_filename_with_dash_underscore(self):
-        self.assertEqual(md.valid_filename("meta_detective-01"), "meta_detective-01")
+        # 16 chars, termine par un alphanum, respecte MAX_FILENAME_LENGTH
+        self.assertEqual(md.valid_filename("meta_detective_1"), "meta_detective_1")
 
     def test_invalid_filename_empty(self):
         with self.assertRaises(argparse.ArgumentTypeError):
