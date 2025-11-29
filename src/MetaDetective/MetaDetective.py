@@ -191,17 +191,17 @@ CSS_STYLE = """
 
 class Logger:
     """Simple logging utility for structured output."""
-    
+
     INFO = "INFO"
     WARNING = "WARNING"
     ERROR = "ERROR"
     DEBUG = "DEBUG"
-    
+
     @staticmethod
     def log(level: str, message: str, file=None) -> None:
         """
         Log a message with a specific level.
-        
+
         Args:
             level: Log level (INFO, WARNING, ERROR, DEBUG)
             message: Message to log
@@ -210,17 +210,17 @@ class Logger:
         if file is None:
             file = sys.stderr if level in (Logger.ERROR, Logger.WARNING) else sys.stdout
         print(f"{level}: {message}", file=file)
-    
+
     @staticmethod
     def info(message: str) -> None:
         """Log an info message."""
         Logger.log(Logger.INFO, message, sys.stdout)
-    
+
     @staticmethod
     def warning(message: str) -> None:
         """Log a warning message."""
         Logger.log(Logger.WARNING, message, sys.stderr)
-    
+
     @staticmethod
     def error(message: str) -> None:
         """Log an error message."""
@@ -233,11 +233,11 @@ class Logger:
 
 class RateLimiter:
     """Rate limiter to control the frequency of HTTP requests."""
-    
+
     def __init__(self, rate: float):
         """
         Initialize a RateLimiter instance.
-        
+
         Args:
             rate (float): Number of allowed requests per second.
         """
@@ -247,7 +247,7 @@ class RateLimiter:
         self.min_interval = 1.0 / rate
         self.last_call = 0.0
         self.lock = threading.Lock()
-    
+
     def wait(self) -> None:
         """Pause the current thread to maintain the desired rate."""
         with self.lock:
@@ -261,15 +261,15 @@ class RateLimiter:
 
 class FileStats:
     """Thread-safe container for file statistics."""
-    
+
     def __init__(self):
         """Initialize empty file statistics."""
         self._stats: Dict[str, Set[Tuple[str, str]]] = {}
         self._lock = threading.Lock()
-    
+
     def add_file(self, extension: str, url: str, filename: str) -> None:
         """Add a file to the statistics.
-        
+
         Args:
             extension: File extension
             url: File URL
@@ -279,19 +279,19 @@ class FileStats:
             if extension not in self._stats:
                 self._stats[extension] = set()
             self._stats[extension].add((url, filename))
-    
+
     def get_stats(self) -> Dict[str, Set[Tuple[str, str]]]:
         """Get a copy of the statistics.
-        
+
         Returns:
             Dictionary mapping extensions to sets of (url, filename) tuples
         """
         with self._lock:
             return {ext: files.copy() for ext, files in self._stats.items()}
-    
+
     def has_files(self) -> bool:
         """Check if any files have been recorded.
-        
+
         Returns:
             True if files exist, False otherwise
         """
@@ -301,15 +301,15 @@ class FileStats:
 
 class URLNormalizer:
     """Normalizes URLs to avoid duplicates (removes fragments, normalizes query params)."""
-    
+
     @staticmethod
     def normalize(url: str) -> str:
         """
         Normalize a URL by removing fragments and sorting query parameters.
-        
+
         Args:
             url: URL to normalize
-            
+
         Returns:
             Normalized URL
         """
@@ -330,54 +330,54 @@ class URLNormalizer:
 
 class URLSet:
     """Thread-safe set for tracking processed URLs with normalization."""
-    
+
     def __init__(self, normalize_urls: bool = True):
         """
         Initialize empty URL set.
-        
+
         Args:
             normalize_urls: Whether to normalize URLs before adding them
         """
         self._urls: Set[str] = set()
         self._lock = threading.Lock()
         self._normalize = normalize_urls
-    
+
     def add(self, url: str) -> bool:
         """Add a URL to the set if not already present.
-        
+
         Args:
             url: URL to add
-            
+
         Returns:
             True if URL was added, False if it was already present
         """
         if self._normalize:
             url = URLNormalizer.normalize(url)
-        
+
         with self._lock:
             if url in self._urls:
                 return False
             self._urls.add(url)
             return True
-    
+
     def __contains__(self, url: str) -> bool:
         """Check if URL is in the set.
-        
+
         Args:
             url: URL to check
-            
+
         Returns:
             True if URL is in the set, False otherwise
         """
         if self._normalize:
             url = URLNormalizer.normalize(url)
-        
+
         with self._lock:
             return url in self._urls
-    
+
     def __len__(self) -> int:
         """Get the number of URLs in the set.
-        
+
         Returns:
             Number of URLs
         """
@@ -391,7 +391,7 @@ class URLSet:
 
 class MetadataExtractor:
     """Handles metadata extraction from files using exiftool."""
-    
+
     @staticmethod
     def get_metadata(file_path: str, fields: List[str]) -> dict:
         """
@@ -437,7 +437,7 @@ class MetadataExtractor:
 
 class GPSProcessor:
     """Handles GPS coordinate processing and formatting."""
-    
+
     @staticmethod
     def dms_to_dd(degrees: int, minutes: int, seconds: float, direction: str) -> float:
         """
@@ -489,13 +489,13 @@ class GPSProcessor:
     @staticmethod
     def process_gps_data(metadata: Dict[str, str]) -> None:
         """Process GPS data in metadata dictionary.
-        
+
         Args:
             metadata: Metadata dictionary to process (modified in-place)
         """
         lat_dd, lon_dd = None, None
         gps_position = metadata.get("GPS Position", None)
-        
+
         if gps_position:
             try:
                 lat_str, lon_str = gps_position.split(", ")
@@ -519,11 +519,11 @@ class GPSProcessor:
 
 class AddressResolver:
     """Handles address resolution from GPS coordinates with caching."""
-    
+
     # Class-level cache to avoid repeated requests for same coordinates
     _cache: Dict[Tuple[str, str], str] = {}
     _cache_lock = threading.Lock()
-    
+
     @classmethod
     def get_address_from_coords(cls, lat: str, lon: str, timeout: int = DEFAULT_HTTP_TIMEOUT) -> str:
         """
@@ -550,12 +550,12 @@ class AddressResolver:
             cache_key = (lat, lon)
             lat_normalized = lat
             lon_normalized = lon
-        
+
         # Check cache first
         with cls._cache_lock:
             if cache_key in cls._cache:
                 return cls._cache[cache_key]
-        
+
         # Fetch from API
         try:
             conn = http.client.HTTPSConnection(NOMINATIM_HOST, timeout=timeout)
@@ -569,17 +569,17 @@ class AddressResolver:
 
             parsed_data = json.loads(data.decode("utf-8"))
             address = parsed_data.get("display_name", "")
-            
+
             # Cache the result
             with cls._cache_lock:
                 cls._cache[cache_key] = address
-            
+
             return address
 
         except (http.client.HTTPException, json.JSONDecodeError, Exception) as e:
             Logger.error(f"Error fetching address for coordinates {lat}, {lon}: {e}")
             return ""
-    
+
     @classmethod
     def clear_cache(cls) -> None:
         """Clear the address cache."""
@@ -646,11 +646,11 @@ class LinkParser(HTMLParser):
 
 class WebScraper:
     """Handles web scraping operations."""
-    
+
     def __init__(self, extensions: List[str]):
         """
         Initialize WebScraper.
-        
+
         Args:
             extensions: List of file extensions to filter (without leading dot)
         """
@@ -661,7 +661,7 @@ class WebScraper:
             # If no valid extensions, use all default extensions
             self.extensions = {ext.lower() for ext in EXTENSIONS}
         self.css_js_pattern = re.compile(r"\.(css|js)($|\?|#)")
-    
+
     def fetch_links_from_url(self, url: str, timeout: int = DEFAULT_HTTP_TIMEOUT) -> List[str]:
         """
         Fetch all links from a given URL.
@@ -682,7 +682,7 @@ class WebScraper:
 
                 # Read the response data once
                 raw_data = response.read()
-                
+
                 # Try to decode the response
                 try:
                     data = raw_data.decode('utf-8')
@@ -735,11 +735,11 @@ class WebScraper:
         """
         if not link or not self.extensions:
             return False
-        
+
         path = urlparse(link).path
         if not path:
             return False
-        
+
         # Extract extension (remove leading dot and convert to lowercase)
         extension = os.path.splitext(path)[1].lstrip('.').lower()
         return extension in self.extensions
@@ -747,7 +747,7 @@ class WebScraper:
 
 class FileDownloader:
     """Handles file downloading operations."""
-    
+
     @staticmethod
     def calculate_hash(data: bytes) -> str:
         """
@@ -794,15 +794,15 @@ class FileDownloader:
         try:
             # Ensure download directory exists
             os.makedirs(download_dir, exist_ok=True)
-            
+
             encoded_url = quote(url, safe=":/?&=")
             parsed_path = urlparse(encoded_url).path
             filename = os.path.basename(parsed_path)
-            
+
             # Use a default filename if none is found
             if not filename:
                 filename = "downloaded_file"
-            
+
             local_filename = os.path.join(download_dir, filename)
 
             # Create request with user agent
@@ -840,11 +840,11 @@ class FileDownloader:
 
 class ScrapingTask:
     """Represents a scraping task."""
-    
+
     def __init__(self, url: str, depth: int, base_domain: str, follow_extern: bool):
         """
         Initialize a scraping task.
-        
+
         Args:
             url: URL to process
             depth: Remaining depth
@@ -859,7 +859,7 @@ class ScrapingTask:
 
 class URLProcessor:
     """Processes URLs during web scraping."""
-    
+
     def __init__(
         self,
         scraper: WebScraper,
@@ -870,7 +870,7 @@ class URLProcessor:
     ):
         """
         Initialize URL processor.
-        
+
         Args:
             scraper: WebScraper instance
             rate_limiter: RateLimiter instance
@@ -883,7 +883,7 @@ class URLProcessor:
         self.file_stats = file_stats
         self.download_dir = download_dir
         self.scan = scan
-    
+
     def process_url(self, task: ScrapingTask, task_queue: queue.Queue) -> None:
         """
         Process a URL task.
@@ -897,7 +897,7 @@ class URLProcessor:
         self.rate_limiter.wait()
 
         links = self.scraper.fetch_links_from_url(task.url)
-        
+
         # Extract file links (convert relative to absolute URLs)
         file_links = []
         for link in links:
@@ -922,14 +922,14 @@ class URLProcessor:
                 # Skip file links as we've already processed them
                 if self.scraper.is_valid_file_link(link):
                     continue
-                
+
                 # Skip non-HTTP/HTTPS URLs (tel:, mailto:, javascript:, etc.)
                 if not link.startswith(('http://', 'https://', '/')):
                     continue
-                
+
                 absolute_link = urljoin(task.url, link)
                 parsed_link = urlparse(absolute_link)
-                
+
                 # Validate that it's an HTTP/HTTPS URL
                 if parsed_link.scheme not in ('http', 'https'):
                     continue
@@ -943,7 +943,7 @@ class URLProcessor:
 
 class ScrapingWorker:
     """Worker thread for processing scraping tasks."""
-    
+
     def __init__(
         self,
         task_queue: queue.Queue,
@@ -954,7 +954,7 @@ class ScrapingWorker:
     ):
         """
         Initialize scraping worker.
-        
+
         Args:
             task_queue: Queue containing tasks to process
             url_processor: URLProcessor instance
@@ -968,7 +968,7 @@ class ScrapingWorker:
         self.stop_event = stop_event
         self.worker_id = worker_id
         self.errors = 0
-    
+
     def run(self) -> None:
         """Main worker loop."""
         while not self.stop_event.is_set():
@@ -976,23 +976,23 @@ class ScrapingWorker:
                 task = self.task_queue.get(timeout=DEFAULT_WORKER_TIMEOUT)
             except queue.Empty:
                 continue
-            
+
             try:
                 # Check for sentinel (None indicates stop)
                 if task is None:
                     self.task_queue.task_done()
                     break
-                
+
                 # Skip if already processed or invalid task
                 if not isinstance(task, ScrapingTask):
                     self.task_queue.task_done()
                     continue
-                
+
                 # Skip if already processed
                 if task.url in self.processed_urls:
                     self.task_queue.task_done()
                     continue
-                
+
                 # Mark as processed and process
                 if self.processed_urls.add(task.url):
                     try:
@@ -1003,7 +1003,7 @@ class ScrapingWorker:
                     except Exception as e:
                         self.errors += 1
                         Logger.error(f"Worker {self.worker_id} - Exception processing {task.url}: {e}")
-                
+
                 self.task_queue.task_done()
             except Exception as e:
                 # Catch any unexpected errors in task processing
@@ -1018,7 +1018,7 @@ class ScrapingWorker:
 
 class ScrapingManager:
     """Manages web scraping operations with multiple worker threads."""
-    
+
     def __init__(
         self,
         initial_url: str,
@@ -1032,7 +1032,7 @@ class ScrapingManager:
     ):
         """
         Initialize scraping manager.
-        
+
         Args:
             initial_url: Starting URL
             depth: Maximum depth to crawl
@@ -1047,16 +1047,16 @@ class ScrapingManager:
         self.depth = depth
         self.follow_extern = follow_extern
         self.scan = scan
-        
+
         base_domain = urlparse(initial_url).netloc
         self.initial_task = ScrapingTask(initial_url, depth, base_domain, follow_extern)
-        
+
         self.scraper = WebScraper(extensions)
         self.rate_limiter = RateLimiter(max(0.1, min(rate, 1000)))  # Limit rate to reasonable range
         self.file_stats = FileStats()
         self.processed_urls = URLSet(normalize_urls=True)  # Enable URL normalization
         self.download_dir = download_dir
-        
+
         self.url_processor = URLProcessor(
             self.scraper,
             self.rate_limiter,
@@ -1064,17 +1064,17 @@ class ScrapingManager:
             download_dir,
             scan
         )
-        
+
         self.task_queue: queue.Queue = queue.Queue()
         self.stop_event = threading.Event()
         self.workers: List[threading.Thread] = []
         self.num_threads = max(1, min(num_threads, 100))  # Limit threads to reasonable range
-    
+
     def start(self) -> None:
         """Start the scraping process."""
         # Add initial task
         self.task_queue.put(self.initial_task)
-        
+
         # Start worker threads
         for i in range(self.num_threads):
             worker = ScrapingWorker(
@@ -1087,7 +1087,7 @@ class ScrapingManager:
             thread = threading.Thread(target=worker.run, name=f"ScrapingWorker-{i}", daemon=False)
             thread.start()
             self.workers.append(thread)
-    
+
     def wait_for_completion(self) -> None:
         """Wait for all tasks to complete."""
         try:
@@ -1096,35 +1096,35 @@ class ScrapingManager:
         except KeyboardInterrupt:
             Logger.warning("\nInterrupted by user. Stopping workers...")
             self.stop_event.set()
-            
+
             # Send sentinels to wake up workers
             for _ in range(self.num_threads):
                 try:
                     self.task_queue.put_nowait(None)
                 except queue.Full:
                     pass
-            
+
             # Wait for all workers to finish (with timeout)
             for worker in self.workers:
                 worker.join(timeout=DEFAULT_SHUTDOWN_TIMEOUT)
                 if worker.is_alive():
                     Logger.warning(f"Worker {worker.name} did not terminate gracefully")
             raise
-        
+
         # Signal workers to stop
         self.stop_event.set()
-        
+
         # Send sentinels to wake up workers
         for _ in range(self.num_threads):
             self.task_queue.put(None)
-        
+
         # Wait for all workers to finish
         for worker in self.workers:
             worker.join()
-    
+
     def get_results(self) -> Tuple[int, Dict[str, Set[Tuple[str, str]]]]:
         """Get scraping results.
-        
+
         Returns:
             Tuple of (num_processed_urls, file_stats)
         """
@@ -1137,7 +1137,7 @@ class ScrapingManager:
 
 class PatternMatcher:
     """Handles pattern matching for filtering metadata."""
-    
+
     @staticmethod
     def matches_any_pattern(value: str, patterns: List[str]) -> bool:
         """
@@ -1152,14 +1152,14 @@ class PatternMatcher:
         """
         if not patterns:
             return False
-        
+
         compiled_patterns = [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
         return any(pattern.search(value) for pattern in compiled_patterns)
 
 
 class MetadataDisplay:
     """Handles metadata display operations."""
-    
+
     @staticmethod
     def display_all_metadata(all_metadata: List[Dict[str, Any]], ignore_patterns: List[str]) -> None:
         """
@@ -1220,7 +1220,7 @@ class MetadataDisplay:
                 next(v for v in values if v.lower() == value.lower()): None
                 for value in values
             }.keys()
-            
+
             if unique_cased_values:
                 if args.format == 'formatted':
                     print(f"{field}:")
@@ -1254,7 +1254,7 @@ class MetadataDisplay:
 
 class MetadataExporter:
     """Handles metadata export operations."""
-    
+
     @staticmethod
     def export_metadata_to_html(
         args: Namespace,
@@ -1458,7 +1458,7 @@ class MetadataExporter:
 
 class FileOperations:
     """Handles file operations."""
-    
+
     @staticmethod
     def filter_files_by_extension(files: List[str], extensions: List[str]) -> List[str]:
         """
@@ -1673,7 +1673,7 @@ def main():
             parser.error("The url choice argument (-u or --url) is required for scraping mode.")
 
         extensions = args.extensions if args.extensions else EXTENSIONS.copy()
-        
+
         # Validate threads and rate limits
         if args.threads < 1 or args.threads > 100:
             parser.error(f"Threads must be between 1 and 100, got {args.threads}")
@@ -1698,7 +1698,7 @@ def main():
 
         if args.scan:
             num_processed, file_stats = manager.get_results()
-            
+
             if not file_stats:
                 print("\nNo files found or no files with specified extensions.")
                 sys.exit(0)
