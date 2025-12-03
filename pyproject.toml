@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MetaDetective"
-version = "1.0.9"
+version = "2.0.0"
 description = "Unleash Metadata Intelligence with MetaDetective. Your Assistant Beyond Metagoofil."
 authors = [{ name = "Franck Ferman", email = "contact@franckferman.fr" }]
 license = { file = "LICENSE" }
