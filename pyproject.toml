@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MetaDetective"
-version = "2.0.1"
+version = "2.0.2"
 description = "Metadata extraction and web scraping for OSINT and pentesting."
 authors = [{ name = "Franck Ferman", email = "contact@franckferman.fr" }]
 license = { file = "LICENSE" }
