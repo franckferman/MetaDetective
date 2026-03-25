@@ -14,6 +14,8 @@
 [![Forks][forks-shield]](https://github.com/franckferman/MetaDetective/network/members)
 [![Stargazers][stars-shield]](https://github.com/franckferman/MetaDetective/stargazers)
 [![Issues][issues-shield]](https://github.com/franckferman/MetaDetective/issues)
+[![PyPI][pypi-shield]](https://pypi.org/project/MetaDetective/)
+[![Docker][docker-shield]](https://hub.docker.com/r/franckferman/metadetective)
 [![License][license-shield]](https://github.com/franckferman/MetaDetective/blob/stable/LICENSE)
 
 <a href="https://github.com/franckferman/MetaDetective">
@@ -269,6 +271,8 @@ MetaDetective is provided for educational and authorized security testing purpos
 [forks-shield]: https://img.shields.io/github/forks/franckferman/MetaDetective.svg?style=for-the-badge
 [stars-shield]: https://img.shields.io/github/stars/franckferman/MetaDetective.svg?style=for-the-badge
 [issues-shield]: https://img.shields.io/github/issues/franckferman/MetaDetective.svg?style=for-the-badge
+[pypi-shield]: https://img.shields.io/pypi/v/MetaDetective.svg?style=for-the-badge&logo=pypi&logoColor=white
+[docker-shield]: https://img.shields.io/docker/pulls/franckferman/metadetective.svg?style=for-the-badge&logo=docker&logoColor=white
 [license-shield]: https://img.shields.io/github/license/franckferman/MetaDetective.svg?style=for-the-badge
 [protonmail-shield]: https://img.shields.io/badge/ProtonMail-8B89CC?style=for-the-badge&logo=protonmail&logoColor=white
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=blue
