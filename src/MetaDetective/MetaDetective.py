@@ -4,7 +4,7 @@
 
 Created By  : Franck FERMAN @franckferman
 Created Date: 27/08/23
-Version     : 2.0.0 (03/12/25)
+Version     : 2.0.3 (26/03/26)
 Refactored  : Enhanced multithreading and code structure
 """
 
@@ -66,7 +66,7 @@ EXIFTOOL_NOT_INSTALLED = "Error: exiftool is not installed. Please install it to
 EXIFTOOL_EXECUTION_ERROR = "Error: exiftool encountered an error."
 
 NOMINATIM_HOST = "nominatim.openstreetmap.org"
-USER_AGENT = 'MetaDetective/2.0.0'
+USER_AGENT = 'MetaDetective/2.0.3'
 NOMINATIM_ENDPOINT = "/reverse?format=jsonv2&lat={lat}&lon={lon}"
 NOMINATIM_LINK = "https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
 NOMINATIM_SEARCH_URL = "https://nominatim.openstreetmap.org/ui/search.html?q="

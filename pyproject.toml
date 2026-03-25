@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "MetaDetective"
-version = "2.0.2"
+version = "2.0.3"
 description = "Metadata extraction and web scraping for OSINT and pentesting."
 authors = [{ name = "Franck Ferman", email = "contact@franckferman.fr" }]
 license = { file = "LICENSE" }
@@ -12,11 +12,13 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU Affero General Public License v3",
     "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
     "Topic :: Security",
     "Topic :: Utilities"
 ]
 readme = { file = "README.md", content-type = "text/markdown" }
-keywords = ["metadata", "osint", "cyber-security"]
+keywords = ["metadata", "osint", "pentest", "exiftool", "cyber-security", "intelligence"]
 requires-python = ">=3.9"
 
 [project.urls]

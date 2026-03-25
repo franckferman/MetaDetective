@@ -106,7 +106,7 @@ Alternatively, if using the container ID:
 
 ## Dockerfile Details <a name="dockerfile-details"></a>
 
-Our Docker image is built upon the lightweight foundation of `debian:bullseye-slim`. 
+Our Docker image is built upon the lightweight foundation of `debian:bookworm-slim`.
 
 The following essential packages are installed:
 

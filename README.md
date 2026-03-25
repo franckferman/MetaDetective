@@ -25,13 +25,6 @@
 <h3 align="center">MetaDetective</h3>
 <p align="center">Metadata extraction and web scraping for OSINT and pentesting.</p>
 
-<p align="center">
-  <a href="https://asciinema.org/a/55mEbe7GFVfIJ6OSfjOaDeYLv">Demo</a>
-  &nbsp;&middot;&nbsp;
-  <a href="https://github.com/franckferman/MetaDetective/issues">Report a bug</a>
-  &nbsp;&middot;&nbsp;
-  <a href="https://github.com/franckferman/MetaDetective/issues">Request a feature</a>
-</p>
 
 </div>
 
@@ -42,7 +35,6 @@
 - [About](#about)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
 
@@ -85,6 +77,9 @@ sudo apt install libimage-exiftool-perl
 
 # macOS
 brew install exiftool
+
+# Windows
+winget install OliverBetz.ExifTool
 ```
 
 ### Direct download (recommended for field use)
@@ -132,8 +127,11 @@ python3 MetaDetective.py -d ./loot/
 # Specific file types, filter noise
 python3 MetaDetective.py -d ./loot/ -t pdf docx -i admin anonymous
 
-# Per-file display with formatted output
-python3 MetaDetective.py -d ./loot/ --display all --format formatted
+# Per-file display
+python3 MetaDetective.py -d ./loot/ --display all
+
+# Formatted output (singular/default display)
+python3 MetaDetective.py -d ./loot/ --format formatted
 
 # Single file
 python3 MetaDetective.py -f report.pdf
@@ -230,12 +228,6 @@ Documents: PDF, DOCX, ODT, XLS, XLSX, PPTX, ODP, RTF, CSV, XML
 Images: JPEG, PNG, TIFF, BMP, GIF, SVG, PSD, HEIC, HEIF
 Email: EML, MSG, PST, OST
 Video: MP4, MOV
-
----
-
-## Contributing
-
-Open an issue or submit a pull request on GitHub.
 
 ---
 
