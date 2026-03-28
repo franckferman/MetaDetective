@@ -1,0 +1,27 @@
+name: bandit
+
+on:
+  push:
+    branches: ["stable"]
+    paths:
+      - 'src/MetaDetective/MetaDetective.py'
+  pull_request:
+    branches: ["stable"]
+    paths:
+      - 'src/MetaDetective/MetaDetective.py'
+
+jobs:
+  security-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit
+        run: bandit ./src/MetaDetective/MetaDetective.py -s B404,B607,B603,B310
