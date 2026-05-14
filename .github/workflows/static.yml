@@ -1,0 +1,52 @@
+name: Deploy static content to Pages
+
+on:
+  push:
+    branches: ["stable"]
+    paths:
+      - 'docs/website/**'
+      - 'pyproject.toml'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Inject version into site
+        run: |
+          VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          echo "[+] Injecting version: $VERSION"
+          sed -i "s/v[0-9]\+\.[0-9]\+\.[0-9]\+/v${VERSION}/g" docs/website/index.html
+          sed -i "s/MD-[0-9]\+\.[0-9]\+\.[0-9]\+/MD-${VERSION}/g" docs/website/index.html
+          sed -i "s/MD-CAP-[0-9]\+\.[0-9]\+\.[0-9]\+/MD-CAP-${VERSION}/g" docs/website/index.html
+          sed -i "s/MD-DEPLOY-[0-9]\+\.[0-9]\+\.[0-9]\+/MD-DEPLOY-${VERSION}/g" docs/website/index.html
+          sed -i "s/MD-OPS-[0-9]\+\.[0-9]\+\.[0-9]\+/MD-OPS-${VERSION}/g" docs/website/index.html
+          sed -i "s/MD-QA-[0-9]\+\.[0-9]\+\.[0-9]\+/MD-QA-${VERSION}/g" docs/website/index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './docs/website'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+
+# Distribution
+build/
+dist/
+*.egg-info/
+
+# Tests and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checkers
+.mypy_cache/
+
+# Editors
+.vscode/
+.idea/
+*~
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific
+MetaDetective_Export-*

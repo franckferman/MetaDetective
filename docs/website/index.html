@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetaDetective - Unleash Metadata Intelligence</title>
+  <meta name="description" content="Advanced metadata extraction, web scraping, and GPS intelligence for OSINT and pentesting. Zero Python dependencies beyond exiftool.">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0c0b0b;
+      --surface:     #111010;
+      --surface-h:   #161414;
+      --border:      #201e1e;
+      --border-h:    #2e2c2c;
+      --red:         #b83228;
+      --red-dim:     rgba(184,50,40,0.10);
+      --amber:       #b87c18;
+      --amber-light: #ca9535;
+      --green:       #00c853;
+      --green-dim:   rgba(0,200,83,0.08);
+      --paper:       #c0b49a;
+      --paper-dim:   #6e6350;
+      --paper-faint: #2e2a24;
+      --text:        #6a5f50;
+      --text-md:     #9e9080;
+      --text-bright: #c4b8a4;
+      --type: 'Special Elite', 'Courier New', serif;
+      --mono: 'JetBrains Mono', 'Courier New', monospace;
+      --body: 'Inter', system-ui, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 15px;
+      line-height: 1.7;
+      overflow-x: hidden;
+      border-top: 2px solid var(--red);
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
+    }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--red); }
+
+    /* ====== HEADER ====== */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: 54px; padding: 0 2rem;
+      background: rgba(12,11,11,0.96);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo-text {
+      font-family: var(--type); font-size: 1.05rem;
+      color: var(--text-bright); text-decoration: none; letter-spacing: .02em;
+    }
+    .logo-text span { color: var(--red); }
+
+    nav { display: flex; align-items: center; gap: 2rem; }
+    nav a {
+      font-family: var(--mono); font-size: .72rem;
+      color: var(--text); text-decoration: none;
+      letter-spacing: .04em; transition: color .2s;
+    }
+    nav a:hover { color: var(--text-bright); }
+    .nav-gh {
+      padding: .3rem .85rem; border: 1px solid var(--red);
+      color: var(--red) !important; border-radius: 2px;
+      transition: background .2s, color .2s !important;
+    }
+    .nav-gh:hover { background: var(--red); color: var(--bg) !important; }
+
+    .hamburger {
+      display: none; flex-direction: column; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px;
+    }
+    .hamburger span { display: block; width: 20px; height: 1.5px; background: var(--text-md); transition: .3s; }
+    .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(4px,4px); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(4px,-4px); }
+
+    .mobile-nav {
+      display: none; position: fixed; top: 54px; left: 0; right: 0; z-index: 99;
+      background: rgba(12,11,11,0.98); border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem; flex-direction: column; gap: 1.2rem;
+    }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav a { font-family: var(--mono); font-size: .85rem; color: var(--text-md); text-decoration: none; }
+
+    /* ====== HERO ====== */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 80px 2rem 4rem; position: relative;
+    }
+    .hero-corner {
+      position: absolute;
+      font-family: var(--mono); font-size: .65rem;
+      color: var(--paper-faint); letter-spacing: .06em; line-height: 1.6;
+    }
+    .hero-corner.tl { top: 5rem; left: 2rem; }
+    .hero-corner.tr { top: 5rem; right: 2rem; text-align: right; }
+    .hero-corner.bl { bottom: 2rem; left: 2rem; }
+    .hero-corner.br { bottom: 2rem; right: 2rem; text-align: right; }
+
+    .stamp {
+      display: inline-block; font-family: var(--type);
+      font-size: .78rem; letter-spacing: .18em;
+      padding: .25rem .75rem;
+      border: 2.5px solid currentColor;
+      text-transform: uppercase; user-select: none;
+    }
+    .stamp-red  { color: var(--red);   opacity: 0.65; transform: rotate(-8deg); }
+    .stamp-green { color: var(--green); opacity: 0.55; transform: rotate(4deg); font-size: .68rem; }
+
+    .hero-inner { text-align: center; max-width: 620px; width: 100%; position: relative; }
+    .hero-stamps {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 2.5rem; min-height: 40px;
+    }
+    .hero-logo {
+      display: block; max-width: 240px; width: 75%;
+      margin: 0 auto 2rem; filter: brightness(0.88);
+    }
+    .hero-title {
+      font-family: var(--type);
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      color: var(--text-bright); line-height: 1.25; margin-bottom: .4rem;
+    }
+    .hero-rule { width: 48px; height: 1px; background: var(--red); margin: .9rem auto 1.2rem; }
+    .hero-sub {
+      font-family: var(--type);
+      font-size: clamp(.88rem, 2vw, 1.05rem);
+      color: var(--text-md); margin-bottom: 2rem; line-height: 1.7;
+    }
+    .hero-badges {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-bottom: 2rem;
+    }
+    .badge {
+      font-family: var(--mono); font-size: .66rem;
+      padding: .18rem .6rem; border: 1px solid var(--border-h); color: var(--text);
+    }
+    .badge.red   { border-color: var(--red);   color: var(--red); }
+    .badge.green { border-color: var(--green);  color: var(--green); }
+
+    .hero-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+    .btn { font-family: var(--mono); font-size: .8rem; padding: .6rem 1.6rem; text-decoration: none; transition: .2s; display: inline-block; letter-spacing: .04em; }
+    .btn-primary { background: var(--red); color: #fff; border: 1px solid var(--red); }
+    .btn-primary:hover { background: transparent; color: var(--red); }
+    .btn-ghost { border: 1px solid var(--border-h); color: var(--text-md); }
+    .btn-ghost:hover { border-color: var(--text-md); color: var(--text-bright); }
+
+    /* ====== BRIEF ====== */
+    #brief {
+      padding: 5rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+    .brief-inner {
+      max-width: 800px; margin: 0 auto;
+      display: grid; grid-template-columns: auto 1fr; gap: 3rem; align-items: center;
+    }
+    .brief-label {
+      writing-mode: vertical-rl; transform: rotate(180deg);
+      font-family: var(--mono); font-size: .68rem;
+      color: var(--red); letter-spacing: .2em;
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .brief-text {
+      font-family: var(--type);
+      font-size: clamp(1.05rem, 2.5vw, 1.4rem);
+      color: var(--text-md); line-height: 1.75;
+    }
+    .brief-text strong { color: var(--text-bright); }
+
+    /* ====== SHARED SECTION STYLES ====== */
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1080px; margin: 0 auto; }
+
+    .section-head {
+      margin-bottom: 3rem;
+      display: flex; align-items: baseline; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .section-head h2 {
+      font-family: var(--type);
+      font-size: clamp(1.3rem, 3vw, 1.9rem);
+      color: var(--text-bright);
+    }
+    .case-ref {
+      font-family: var(--mono); font-size: .66rem;
+      color: var(--paper-faint); letter-spacing: .08em;
+    }
+
+    /* ====== EVIDENCE ====== */
+    #evidence { background: #0a0909; border-top: 1px solid var(--border); }
+
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .exhibit {
+      background: var(--surface); padding: 1.6rem;
+      transition: background .2s; position: relative;
+      border-left: 3px solid transparent;
+    }
+    .exhibit:hover { background: var(--surface-h); border-left-color: var(--amber); }
+    .exhibit-tag { display: flex; align-items: center; gap: .7rem; margin-bottom: 1rem; }
+    .exhibit-num {
+      width: 26px; height: 26px; border: 1px solid var(--amber); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: .64rem; color: var(--amber); flex-shrink: 0;
+    }
+    .exhibit-label {
+      font-family: var(--mono); font-size: .64rem;
+      color: var(--paper-faint); letter-spacing: .1em; text-transform: uppercase;
+    }
+    .new-tag {
+      margin-left: auto; font-family: var(--mono); font-size: .6rem;
+      padding: .1rem .4rem; background: var(--green-dim); color: var(--green);
+    }
+    .exhibit-title { font-family: var(--type); font-size: 1rem; color: var(--text-bright); margin-bottom: .5rem; }
+    .exhibit-desc { font-size: .84rem; color: var(--text); line-height: 1.65; }
+
+    /* ====== DEPLOY (INSTALL) ====== */
+    #deploy { border-top: 1px solid var(--border); }
+
+    .tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .tab {
+      font-family: var(--mono); font-size: .75rem;
+      padding: .6rem 1.2rem; color: var(--text);
+      cursor: pointer; border-bottom: 2px solid transparent;
+      transition: .2s; user-select: none; letter-spacing: .03em;
+    }
+    .tab:hover { color: var(--text-bright); }
+    .tab.active { color: var(--amber-light); border-bottom-color: var(--amber); }
+
+    .terminal { background: #080707; border: 1px solid var(--border); border-top: none; }
+    .term-bar {
+      background: #0f0e0e; padding: .5rem 1rem;
+      display: flex; align-items: center; gap: .5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
+    .term-title { font-family: var(--mono); font-size: .67rem; color: var(--paper-faint); margin: 0 auto; }
+    .term-body { padding: 1.4rem 1.6rem; overflow-x: auto; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    pre {
+      font-family: var(--mono); font-size: .8rem;
+      line-height: 1.9; color: var(--text-md);
+      white-space: pre; overflow-x: auto;
+    }
+    .cm { color: #3e3830; font-style: italic; }
+    .cp { color: var(--green); }
+    .cc { color: var(--text-bright); }
+    .cf { color: var(--amber-light); }
+    .cv { color: #7aa8d4; }
+    .cs { color: #c4a84a; }
+
+    /* ====== PROTOCOLS (USAGE) ====== */
+    #protocols { background: #0a0909; border-top: 1px solid var(--border); }
+
+    .protocol-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+      gap: 1.5rem;
+    }
+    .protocol-card { background: var(--surface); border: 1px solid var(--border); }
+    .protocol-head {
+      background: #0f0e0e; padding: .5rem 1rem;
+      display: flex; align-items: center; gap: .5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .protocol-title { font-family: var(--mono); font-size: .68rem; color: var(--paper-faint); margin-left: .3rem; }
+    .protocol-body { padding: 1.2rem 1.4rem; overflow-x: auto; }
+
+    /* ====== FAQ ====== */
+    #interrogation { border-top: 1px solid var(--border); }
+
+    .faq-wrap { max-width: 780px; }
+    .faq-item { border-bottom: 1px solid var(--border); }
+    .faq-q {
+      width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+      padding: 1.1rem 0;
+    }
+    .faq-q-text {
+      font-family: var(--type); font-size: .96rem;
+      color: var(--text-md); text-align: left; line-height: 1.4; transition: color .2s;
+    }
+    .faq-q:hover .faq-q-text { color: var(--text-bright); }
+    .faq-item.open .faq-q-text { color: var(--amber-light); }
+    .faq-q-icon {
+      font-family: var(--mono); font-size: .7rem;
+      color: var(--red); flex-shrink: 0; margin-top: .2rem;
+      transition: transform .3s;
+    }
+    .faq-item.open .faq-q-icon { transform: rotate(90deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height .35s ease; font-size: .86rem; color: var(--text); line-height: 1.7; }
+    .faq-item.open .faq-a { max-height: 500px; }
+    .faq-a-inner { padding: 0 0 1rem; }
+    .hi { color: var(--amber-light); font-family: var(--mono); font-size: .84em; }
+
+    /* ====== CTA ====== */
+    #cta { background: #0a0909; border-top: 1px solid var(--border); }
+    .cta-inner { max-width: 560px; margin: 0 auto; text-align: center; }
+    .cta-stamp { margin-bottom: 1.5rem; }
+    .cta-inner h2 { font-family: var(--type); font-size: clamp(1.3rem, 3vw, 1.9rem); color: var(--text-bright); margin-bottom: .8rem; }
+    .cta-inner p { font-size: .9rem; margin-bottom: 2rem; }
+    .cta-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+
+    /* ====== FOOTER ====== */
+    footer { padding: 2.5rem 2rem; border-top: 1px solid var(--border); }
+    .footer-inner {
+      max-width: 1080px; margin: 0 auto;
+      display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 2rem;
+    }
+    .footer-brand .logo-text { display: block; margin-bottom: .6rem; }
+    .footer-brand p { font-size: .8rem; max-width: 280px; }
+    .footer-links { display: flex; gap: 3rem; flex-wrap: wrap; }
+    .footer-col h4 { font-family: var(--mono); font-size: .7rem; color: var(--text-bright); margin-bottom: .8rem; letter-spacing: .08em; }
+    .footer-col ul { list-style: none; }
+    .footer-col li { margin-bottom: .4rem; }
+    .footer-col a { font-size: .8rem; color: var(--text); text-decoration: none; transition: color .2s; }
+    .footer-col a:hover { color: var(--amber-light); }
+    .footer-bottom {
+      max-width: 1080px; margin: 2rem auto 0;
+      padding-top: 1.2rem; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+    }
+    .footer-bottom span { font-family: var(--mono); font-size: .68rem; color: var(--paper-faint); }
+    .case-badge { font-family: var(--mono); font-size: .68rem; padding: .15rem .6rem; border: 1px solid var(--border-h); color: var(--text); }
+
+    /* ====== RESPONSIVE ====== */
+    @media (max-width: 768px) {
+      nav { display: none; }
+      .hamburger { display: flex; }
+
+      .brief-inner { grid-template-columns: 1fr; gap: 1.5rem; }
+      .brief-label { writing-mode: horizontal-tb; transform: none; }
+
+      .hero-corner.tl, .hero-corner.tr, .hero-corner.bl, .hero-corner.br { display: none; }
+      .hero-inner { max-width: 100%; }
+      .hero-stamps { justify-content: center; gap: 1rem; }
+      .hero-logo { max-width: 180px; }
+
+      .section-head { flex-direction: column; gap: .3rem; }
+      section { padding: 3.5rem 1.2rem; }
+      #brief, #cta { padding: 3.5rem 1.2rem; }
+
+      /* Evidence grid: single column on mobile */
+      .evidence-grid { grid-template-columns: 1fr; }
+
+      /* Tabs: allow wrapping on small screens */
+      .tabs { flex-wrap: wrap; }
+      .tab { flex: 1 1 auto; text-align: center; padding: .55rem .8rem; }
+
+      /* Terminal code: prevent overflow, scroll horizontally */
+      .term-body { padding: 1rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      pre { font-size: .75rem; }
+
+      /* Protocol grid: single column */
+      .protocol-grid { grid-template-columns: 1fr; }
+      .protocol-body { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 1rem; }
+
+      /* Footer */
+      .footer-links { gap: 2rem; }
+    }
+
+    @media (max-width: 480px) {
+      header { padding: 0 1.2rem; }
+      .footer-inner { flex-direction: column; }
+      .footer-links { flex-direction: column; gap: 1.5rem; }
+
+      .hero-title { font-size: 1.3rem; }
+      .hero-sub { font-size: .86rem; }
+
+      .hero-cta { flex-direction: column; align-items: center; }
+      .btn { width: 100%; max-width: 280px; text-align: center; }
+
+      .cta-links { flex-direction: column; align-items: center; }
+      .cta-links .btn { width: 100%; max-width: 280px; text-align: center; }
+
+      .exhibit { padding: 1.2rem; }
+      pre { font-size: .72rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a href="#" class="logo-text">Meta<span>Detective</span></a>
+  <nav>
+    <a href="#evidence">Evidence</a>
+    <a href="#deploy">Deploy</a>
+    <a href="#interrogation">FAQ</a>
+    <a href="https://github.com/franckferman/MetaDetective" class="nav-gh" target="_blank" rel="noopener">GitHub</a>
+  </nav>
+  <button class="hamburger" aria-label="Menu" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="#evidence" onclick="closeMenu()">Evidence</a>
+  <a href="#deploy" onclick="closeMenu()">Deploy</a>
+  <a href="#protocols" onclick="closeMenu()">Protocols</a>
+  <a href="#interrogation" onclick="closeMenu()">FAQ</a>
+  <a href="https://github.com/franckferman/MetaDetective" target="_blank" rel="noopener">GitHub &rarr;</a>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-corner tl">UNIT: OSINT-INTEL<br>CASE #MD-2.0.4-2026</div>
+  <div class="hero-corner tr">PYTHON 3 / EXIFTOOL<br>AGPL-3.0</div>
+  <div class="hero-corner bl">zero python dependencies<br>single file deployment</div>
+  <div class="hero-corner br">github.com/franckferman<br>/MetaDetective</div>
+
+  <div class="hero-inner">
+    <div class="hero-stamps">
+      <span class="stamp stamp-red">Classified</span>
+      <span class="stamp stamp-green">Case Active</span>
+    </div>
+
+    <img src="logo.png" alt="MetaDetective" class="hero-logo">
+
+    <h1 class="hero-title">Unleash Metadata Intelligence</h1>
+    <div class="hero-rule"></div>
+    <p class="hero-sub">Every file has a story.<br>MetaDetective reads it.</p>
+
+    <div class="hero-badges">
+      <span class="badge red">v2.0.4</span>
+      <span class="badge green">zero deps</span>
+      <span class="badge">Python 3</span>
+      <span class="badge">exiftool</span>
+      <span class="badge">AGPL-3.0</span>
+    </div>
+
+    <div class="hero-cta">
+      <a href="#deploy" class="btn btn-primary">Open the Case</a>
+      <a href="https://github.com/franckferman/MetaDetective" class="btn btn-ghost" target="_blank" rel="noopener">View on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- BRIEF -->
+<section id="brief">
+  <div class="container">
+    <div class="brief-inner">
+      <div class="brief-label">The Suspect</div>
+      <p class="brief-text">
+        <strong>Metadata.</strong> Hidden inside every document, image, and file your targets publish.
+        Authors. Software versions. GPS coordinates. Internal hostnames. Creation dates.
+        All embedded. All exposed.
+        <strong>MetaDetective surfaces it.</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- EVIDENCE ROOM -->
+<section id="evidence">
+  <div class="container">
+    <div class="section-head">
+      <h2>Evidence Room</h2>
+      <span class="case-ref">REF: MD-CAP-2.0.4</span>
+    </div>
+
+    <div class="evidence-grid">
+
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">01</div>
+          <span class="exhibit-label">Exhibit A</span>
+        </div>
+        <h3 class="exhibit-title">Metadata Extraction</h3>
+        <p class="exhibit-desc">Powered by exiftool. 25+ fields extracted from documents, images, and media - authors, software, creation dates, internal hostnames, serial numbers, hyperlinks.</p>
+      </div>
+
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">02</div>
+          <span class="exhibit-label">Exhibit B</span>
+          <span class="new-tag">new</span>
+        </div>
+        <h3 class="exhibit-title">HEIC / HEIF Support</h3>
+        <p class="exhibit-desc">iPhone and iPad photos carry sub-meter GPS precision. MetaDetective now reads HEIC and HEIF natively - a direct line to geolocation from a single image file.</p>
+      </div>
+
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">03</div>
+          <span class="exhibit-label">Exhibit C</span>
+        </div>
+        <h3 class="exhibit-title">Direct Web Scraping</h3>
+        <p class="exhibit-desc">Crawl target sites directly. No search engine in the middle, no IP blocks. Multithreaded, configurable depth, rate-limited, extension-filtered.</p>
+      </div>
+
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">04</div>
+          <span class="exhibit-label">Exhibit D</span>
+        </div>
+        <h3 class="exhibit-title">GPS Intelligence</h3>
+        <p class="exhibit-desc">DMS to decimal degrees conversion, Nominatim reverse geocoding with caching, direct map links. Physical location from a single file.</p>
+      </div>
+
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">05</div>
+          <span class="exhibit-label">Exhibit E</span>
+          <span class="new-tag">new</span>
+        </div>
+        <h3 class="exhibit-title">Export: HTML / TXT / JSON</h3>
+        <p class="exhibit-desc">HTML for client reports. TXT for archiving. JSON for piping into <span class="hi">jq</span>, databases, or custom tooling. Structured. Predictable. Scriptable.</p>
+      </div>
+
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">06</div>
+          <span class="exhibit-label">Exhibit F</span>
+        </div>
+        <h3 class="exhibit-title">Selective Parsing</h3>
+        <p class="exhibit-desc"><span class="hi">--parse-only Author Creator</span> limits extraction to exactly what you need. Less noise. Faster output. Cleaner downstream pipelines.</p>
+      </div>
+
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">07</div>
+          <span class="exhibit-label">Exhibit G</span>
+          <span class="new-tag">new</span>
+        </div>
+        <h3 class="exhibit-title">Summary &amp; Timeline</h3>
+        <p class="exhibit-desc"><span class="hi">--summary</span> gives a statistical overview: identities, emails, GPS exposure, tools, date range. <span class="hi">--timeline</span> shows a chronological view of document creation and modification. <span class="hi">--no-banner</span> for clean pipeline output.</p>
+      </div>
+
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">08</div>
+          <span class="exhibit-label">Exhibit H</span>
+          <span class="new-tag">new</span>
+        </div>
+        <h3 class="exhibit-title">Stealth Scraping</h3>
+        <p class="exhibit-desc"><span class="hi">--user-agent stealth</span> swaps the default UA for a realistic browser fingerprint. 13 presets: Chrome, Firefox, Safari, Edge, Android, iPhone, Googlebot. Or pass any custom string.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FIELD DEPLOYMENT -->
+<section id="deploy">
+  <div class="container">
+    <div class="section-head">
+      <h2>Field Deployment</h2>
+      <span class="case-ref">REF: MD-DEPLOY-2.0.4</span>
+    </div>
+    <p style="font-size:.87rem; color:var(--text); margin-bottom:2rem; max-width:500px;">
+      One file. Zero Python dependencies. Deploy anywhere Python 3 and exiftool are available.
+    </p>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'curl')">curl</div>
+      <div class="tab" onclick="switchTab(this,'pip')">pip</div>
+      <div class="tab" onclick="switchTab(this,'git')">git clone</div>
+      <div class="tab" onclick="switchTab(this,'docker')">docker</div>
+    </div>
+    <div class="terminal">
+      <div class="term-bar">
+        <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+        <span class="term-title">field terminal</span>
+      </div>
+      <div class="term-body">
+
+        <div class="tab-content active" id="tab-curl">
+<pre><span class="cm"># Fastest - one curl, no pip, no clone</span>
+<span class="cp">$ </span><span class="cc">curl -O</span> <span class="cv">https://raw.githubusercontent.com/franckferman/MetaDetective/stable/src/MetaDetective/MetaDetective.py</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-h</span>
+
+<span class="cm"># Install exiftool if needed</span>
+<span class="cp">$ </span><span class="cc">sudo apt install</span> <span class="cv">libimage-exiftool-perl</span>   <span class="cm"># Debian / Ubuntu / Kali</span>
+<span class="cp">$ </span><span class="cc">brew install</span> <span class="cv">exiftool</span>                        <span class="cm"># macOS</span></pre>
+        </div>
+
+        <div class="tab-content" id="tab-pip">
+<pre><span class="cp">$ </span><span class="cc">python3 -m venv</span> <span class="cv">MetaDetectiveEnv</span>
+<span class="cp">$ </span><span class="cc">source</span> <span class="cv">MetaDetectiveEnv/bin/activate</span>
+<span class="cp">$ </span><span class="cc">pip install</span> <span class="cv">MetaDetective</span>
+<span class="cp">$ </span><span class="cc">metadetective</span> <span class="cf">-h</span></pre>
+        </div>
+
+        <div class="tab-content" id="tab-git">
+<pre><span class="cp">$ </span><span class="cc">git clone</span> <span class="cv">https://github.com/franckferman/MetaDetective.git</span>
+<span class="cp">$ </span><span class="cc">cd</span> <span class="cv">MetaDetective</span>
+<span class="cp">$ </span><span class="cc">python3 src/MetaDetective/MetaDetective.py</span> <span class="cf">-h</span></pre>
+        </div>
+
+        <div class="tab-content" id="tab-docker">
+<pre><span class="cp">$ </span><span class="cc">docker pull</span> <span class="cv">franckferman/metadetective</span>
+<span class="cp">$ </span><span class="cc">docker run</span> <span class="cf">--rm -it</span> <span class="cv">franckferman/metadetective</span> <span class="cf">-h</span>
+
+<span class="cm"># Mount a local directory</span>
+<span class="cp">$ </span><span class="cc">docker run</span> <span class="cf">--rm -v</span> <span class="cv">$(pwd)/loot:/data</span> <span class="cv">franckferman/metadetective</span> <span class="cf">-d</span> <span class="cv">/data</span></pre>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTIGATION PROTOCOLS -->
+<section id="protocols">
+  <div class="container">
+    <div class="section-head">
+      <h2>Investigation Protocols</h2>
+      <span class="case-ref">REF: MD-OPS-2.0.4</span>
+    </div>
+
+    <div class="protocol-grid">
+
+      <div class="protocol-card">
+        <div class="protocol-head">
+          <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+          <span class="protocol-title">protocol_01 :: directory analysis</span>
+        </div>
+        <div class="protocol-body">
+<pre><span class="cm"># Singular deduplicated view</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-d</span> <span class="cv">./loot/</span>
+
+<span class="cm"># PDF and DOCX only, filter noise</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-d</span> <span class="cv">./loot/</span> <span class="cf">-t</span> <span class="cv">pdf docx</span> <span class="cf">-i</span> <span class="cv">admin anonymous</span>
+
+<span class="cm"># Per-file formatted display</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-d</span> <span class="cv">./loot/</span> <span class="cf">--display all --format formatted</span></pre>
+        </div>
+      </div>
+
+      <div class="protocol-card">
+        <div class="protocol-head">
+          <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+          <span class="protocol-title">protocol_02 :: export + pivot</span>
+        </div>
+        <div class="protocol-body">
+<pre><span class="cm"># JSON, targeted fields only</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-d</span> <span class="cv">./docs/</span> \
+    <span class="cf">--parse-only</span> <span class="cv">Author Creator</span> \
+    <span class="cf">-e</span> <span class="cv">json</span> <span class="cf">-o</span> <span class="cv">~/results/</span>
+
+<span class="cm"># Pivot with jq</span>
+<span class="cp">$ </span><span class="cc">jq</span> <span class="cs">'.unique.Author'</span> <span class="cv">~/results/MetaDetective_Export-*.json</span></pre>
+        </div>
+      </div>
+
+      <div class="protocol-card">
+        <div class="protocol-head">
+          <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+          <span class="protocol-title">protocol_03 :: web recon</span>
+        </div>
+        <div class="protocol-body">
+<pre><span class="cm"># Scan without downloading</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">--scraping --scan</span> \
+    <span class="cf">--url</span> <span class="cv">https://target.com/</span>
+
+<span class="cm"># Download PDFs, depth 2, 8 threads</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">--scraping</span> \
+    <span class="cf">--url</span> <span class="cv">https://target.com/</span> \
+    <span class="cf">--download-dir</span> <span class="cv">~/loot/</span> \
+    <span class="cf">--extensions</span> <span class="cv">pdf docx</span> <span class="cf">--depth</span> <span class="cv">2</span> <span class="cf">--threads</span> <span class="cv">8</span></pre>
+        </div>
+      </div>
+
+      <div class="protocol-card">
+        <div class="protocol-head">
+          <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+          <span class="protocol-title">protocol_04 :: GPS / HEIC</span>
+        </div>
+        <div class="protocol-body">
+<pre><span class="cm"># iPhone photos - extract GPS</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-d</span> <span class="cv">./photos/</span> \
+    <span class="cf">-t</span> <span class="cv">heic heif jpg</span> \
+    <span class="cf">--parse-only</span> <span class="cv">'GPS Position' 'Map Link'</span>
+
+<span class="cm"># HTML report with reverse geocoding</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-f</span> <span class="cv">photo.heic</span> <span class="cf">-e html</span></pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- INTERROGATION / FAQ -->
+<section id="interrogation">
+  <div class="container">
+    <div class="section-head">
+      <h2>Interrogation Room</h2>
+      <span class="case-ref">REF: MD-QA-2.0.4</span>
+    </div>
+
+    <div class="faq-wrap">
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">What is metadata and why does it matter in pentesting?</span>
+          <span class="faq-q-icon">&#9658;</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          Metadata is information embedded inside files - not visible in the document but readable by tools. A PDF can expose the author's real name, the machine it was created on, the software version, when it was last modified. An image can expose GPS coordinates, camera model, serial number. A single leaked document can map an Active Directory or reveal an executive's home address.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Why MetaDetective over Metagoofil?</span>
+          <span class="faq-q-icon">&#9658;</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          Metagoofil relies on Google to find files - which means rate limiting, CAPTCHAs, and IP blocks. MetaDetective scrapes target sites directly. No search engine dependency, no infrastructure tax. It also extracts more fields, supports HEIC, JSON export, and selective parsing that Metagoofil never had.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Why a single file with zero dependencies?</span>
+          <span class="faq-q-icon">&#9658;</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          In the field, you don't always have pip access or internet connectivity. A single <span class="hi">.py</span> file means one <span class="hi">curl</span> command and you're operational. The only dependency is exiftool, which ships with Kali and most security distributions. This is a deliberate design choice.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">What does --parse-only actually do?</span>
+          <span class="faq-q-icon">&#9658;</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          It filters extraction at the source. Instead of processing all 25+ fields, <span class="hi">--parse-only Author Creator</span> tells MetaDetective to only look for those two fields. Less noise, cleaner output, easier to pipe downstream. Especially effective combined with <span class="hi">-e json</span> and <span class="hi">jq</span>.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">What file formats are supported?</span>
+          <span class="faq-q-icon">&#9658;</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          Documents: PDF, DOCX, ODT, XLS, XLSX, PPTX, RTF. Images: JPEG, PNG, TIFF, PSD, SVG, BMP, HEIC, HEIF. Email: EML, MSG, PST. Video: MP4, MOV. If exiftool can parse it, MetaDetective can analyze and present it.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">JSON export - what's the output structure?</span>
+          <span class="faq-q-icon">&#9658;</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          With <span class="hi">--display singular</span>: <span class="hi">{"unique": {"Author": ["name1", "name2"]}}</span> - deduplicated values per field, ready to pivot. With <span class="hi">--display all</span>: <span class="hi">{"files": [{...}, ...]}</span> - one object per file. Both include tool version and generation timestamp.
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="container">
+    <div class="cta-inner">
+      <div class="cta-stamp">
+        <span class="stamp stamp-red" style="font-size:.72rem; letter-spacing:.14em;">Case Open</span>
+      </div>
+      <h2>Open the investigation.</h2>
+      <p>Available on GitHub, PyPI, and Docker Hub.</p>
+      <div class="cta-links">
+        <a href="https://github.com/franckferman/MetaDetective" class="btn btn-primary" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://pypi.org/project/MetaDetective/" class="btn btn-ghost" target="_blank" rel="noopener">PyPI</a>
+        <a href="https://hub.docker.com/r/franckferman/metadetective" class="btn btn-ghost" target="_blank" rel="noopener">Docker Hub</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="#" class="logo-text">Meta<span>Detective</span></a>
+      <p>Metadata extraction and web scraping for OSINT and pentesting. Built by <a href="https://github.com/franckferman" target="_blank" rel="noopener" style="color:var(--amber-light)">Franck FERMAN</a>.</p>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="#evidence">Evidence Room</a></li>
+          <li><a href="#deploy">Field Deployment</a></li>
+          <li><a href="#protocols">Protocols</a></li>
+          <li><a href="#interrogation">FAQ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Links</h4>
+        <ul>
+          <li><a href="https://github.com/franckferman/MetaDetective" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="https://pypi.org/project/MetaDetective/" target="_blank" rel="noopener">PyPI</a></li>
+          <li><a href="https://hub.docker.com/r/franckferman/metadetective" target="_blank" rel="noopener">Docker Hub</a></li>
+          <li><a href="https://twitter.com/franckferman" target="_blank" rel="noopener">Twitter / X</a></li>
+          <li><a href="https://www.linkedin.com/in/franckferman" target="_blank" rel="noopener">LinkedIn</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>&copy; 2026 Franck FERMAN &nbsp;|&nbsp; <a href="https://github.com/franckferman/MetaDetective/blob/stable/LICENSE" target="_blank" rel="noopener" style="color:var(--paper-faint)">AGPL-3.0</a></span>
+    <span class="case-badge">CASE #MD-2.0.4 &nbsp; STATUS: ACTIVE</span>
+  </div>
+</footer>
+
+<script>
+  function toggleMenu() {
+    document.getElementById('mobileNav').classList.toggle('open');
+    document.querySelector('.hamburger').classList.toggle('open');
+  }
+  function closeMenu() {
+    document.getElementById('mobileNav').classList.remove('open');
+    document.querySelector('.hamburger').classList.remove('open');
+  }
+  function switchTab(el, id) {
+    el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+  }
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); closeMenu(); }
+    });
+  });
+</script>
+
+</body>
+</html>

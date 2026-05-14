@@ -1,0 +1,8 @@
+.git
+.github
+docs/
+tests/
+examples/
+*.md
+*.sh
+.dockerignore
