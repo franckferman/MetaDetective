@@ -59,7 +59,7 @@ It has no Python dependencies beyond exiftool. One `curl` and you're operational
 
 **What it does beyond extraction:**
 - Direct web scraping of target sites (no search engine dependency, no IP blocks)
-- GPS reverse geocoding with OpenStreetMap, map link generation
+- GPS reverse geocoding with OpenStreetMap (opt-out with `--no-geocode`), map link generation
 - Export to HTML, TXT, or JSON
 - Selective field extraction with `--parse-only`
 - Deduplication across multiple files
@@ -126,6 +126,26 @@ docker run --rm -v $(pwd)/loot:/data franckferman/metadetective -d /data
 ---
 
 ## Usage
+
+### Quick start (positional shortcut)
+
+MetaDetective auto-detects a positional argument: a **path** runs analysis, an **http(s):// URL** runs scraping. The classic `-d` / `-s -u` flags still work exactly as before.
+
+```bash
+# Analyze a directory
+python3 MetaDetective.py ./loot/
+
+# Analyze a single file
+python3 MetaDetective.py report.pdf
+
+# Scrape a website (preview only)
+python3 MetaDetective.py https://target.com/ --scan
+
+# Scrape and download (defaults to ./loot/ and --depth 1)
+python3 MetaDetective.py https://target.com/
+```
+
+Safeguards are preserved: a path never triggers web scraping, and a URL rejects analysis-only flags.
 
 ### File analysis
 
@@ -222,14 +242,14 @@ MetaDetective can crawl a target website, discover downloadable files (PDF, DOCX
 - **`--download-dir`** - Download files to a local directory for analysis. This is the primary mode.
 - **`--scan`** - Preview only: list discovered files and stats without downloading. Useful for scoping before a full download.
 
-> `--scan` and `--download-dir` are mutually exclusive.
+> `--scan` and `--download-dir` are mutually exclusive. If neither is given, MetaDetective defaults to **download** mode into `./loot/` (created if missing).
 
-**The `--depth` flag is critical.** By default, depth is **0**: MetaDetective only looks at the URL you provide. Most interesting files (reports, presentations, internal documents) are linked from subpages, not the homepage. **Always set `--depth 1` or higher for real engagements.**
+**The `--depth` flag controls crawl breadth.** The default is **1**: MetaDetective looks at the target URL *and* the pages linked from it, which covers most site structures. Use `0` to restrict to the single target page, or `2+` for deeper crawls.
 
 | Depth | Behavior |
 |-------|----------|
-| `0` (default) | Only the target URL. Finds files directly linked on that single page. |
-| `1` | Target URL + all pages linked from it. Covers most site structures. |
+| `0` | Only the target URL. Finds files directly linked on that single page. |
+| `1` (default) | Target URL + all pages linked from it. Covers most site structures. |
 | `2+` | Follows links N levels deep. Broader coverage, more requests, slower. |
 
 **Download (primary workflow):**
@@ -281,9 +301,9 @@ python3 MetaDetective.py -d ~/loot/ -e html -o ~/results/
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--url` | required | Target URL |
-| `--download-dir` | - | Download destination (created if needed) |
+| `--download-dir` | `./loot/` | Download destination (created if missing). Used by default when neither `--scan` nor `--download-dir` is set. |
 | `--scan` | - | Preview mode (no download) |
-| `--depth` | `0` | Link depth to follow. **Set to 1+ for real use.** |
+| `--depth` | `1` | Link depth to follow. Use `0` for the single page, `2+` for deeper crawls. |
 | `--extensions` | all supported | Filter by file type |
 | `--threads` | `4` | Concurrent download threads (1-100) |
 | `--rate` | `5` | Max requests per second (1-1000) |
@@ -349,6 +369,8 @@ python3 MetaDetective.py -d ./loot/ -e json -c pentest-corp -o ~/results/
 
 The HTML export includes a summary header showing total files analyzed, total metadata fields extracted, and unique identities found (from Author, Creator, and Last Modified By fields).
 
+> All metadata values are HTML-escaped in the report. A document carrying crafted metadata (e.g. a malicious `Author` field) cannot inject markup or scripts into the report you open in your browser.
+
 ### User-Agent (scraping)
 
 When scraping, MetaDetective identifies itself as `MetaDetective/<version>` by default. Use `--user-agent` to change this:
@@ -366,6 +388,23 @@ python3 MetaDetective.py --scraping --scan --url https://target.com/ --user-agen
 python3 MetaDetective.py --scraping --scan --url https://target.com/ \
   --user-agent 'Mozilla/5.0 (compatible; MyScanner/1.0)'
 ```
+
+### Reverse geocoding and privacy
+
+When a file exposes GPS coordinates, MetaDetective resolves them to a human-readable address via OpenStreetMap's Nominatim service. **This sends the target's coordinates to a third party.** Requests are rate-limited to 1/second (per Nominatim's usage policy) and cached.
+
+```bash
+# Opsec: disable geocoding entirely, show raw GPS only, no third-party request
+python3 MetaDetective.py -d ./loot/ --no-geocode
+
+# Query your own (self-hosted) Nominatim server instead of the public one
+python3 MetaDetective.py -d ./loot/ --nominatim-url https://nominatim.example.com
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--no-geocode` | off (geocoding on) | Disable reverse geocoding; no coordinates leave your machine |
+| `--nominatim-url` | public OSM server | Base URL of a Nominatim server to query |
 
 ### Filtering
 
