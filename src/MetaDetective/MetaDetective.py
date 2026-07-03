@@ -4,7 +4,7 @@
 
 Created By  : Franck FERMAN @franckferman
 Created Date: 27/08/23
-Version     : 2.0.4 (28/03/26)
+Version     : 2.0.6 (03/07/26)
 Refactored  : Enhanced multithreading and code structure
 """
 
