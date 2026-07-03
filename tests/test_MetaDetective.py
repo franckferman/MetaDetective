@@ -405,5 +405,58 @@ class TestPatternMatcher(unittest.TestCase):
         self.assertFalse(md.PatternMatcher.matches_any_pattern("anything", []))
 
 
+# ============================================================================
+# HTML export escaping (stored-XSS regression)
+# ============================================================================
+
+class TestHtmlExportEscaping(unittest.TestCase):
+    """Ensure attacker-controlled metadata cannot inject markup into the report."""
+
+    IMG_PAYLOAD = '<img src=x onerror="alert(1)">'
+    SCRIPT_PAYLOAD = "<script>alert(document.domain)</script>"
+
+    def _malicious_metadata(self):
+        return {
+            "File Name": "piege.pdf",
+            "Author": self.IMG_PAYLOAD,
+            "Creator": f"Normal {self.SCRIPT_PAYLOAD} Corp",
+            "Title": self.SCRIPT_PAYLOAD,
+        }
+
+    def test_display_all_escapes_payloads(self):
+        args = argparse.Namespace(display="all", format=None)
+        html = md.MetadataExporter.export_metadata_to_html(
+            args, [self._malicious_metadata()], []
+        )
+        self.assertNotIn(self.IMG_PAYLOAD, html)
+        self.assertNotIn(self.SCRIPT_PAYLOAD, html)
+        # The escaped form must be present instead
+        self.assertIn("&lt;img src=x onerror", html)
+        self.assertIn("&lt;script&gt;", html)
+
+    def test_display_singular_escapes_payloads(self):
+        args = argparse.Namespace(display="singular", format="concise")
+        html = md.MetadataExporter.export_metadata_to_html(
+            args, [self._malicious_metadata()], []
+        )
+        self.assertNotIn(self.IMG_PAYLOAD, html)
+        self.assertIn("&lt;img src=x onerror", html)
+
+    def test_map_link_still_rendered_as_anchor(self):
+        # 'Map Link' holds a plain URL and must remain a working anchor.
+        rendered = md.MetadataExporter._render_singular_value(
+            "Map Link", "https://nominatim.openstreetmap.org/ui/reverse.html?lat=1&lon=2"
+        )
+        self.assertIn('<a href="https://nominatim.openstreetmap.org', rendered)
+        self.assertIn("View on Map", rendered)
+
+    def test_safe_gps_links_escapes_address(self):
+        links = md.MetadataExporter._safe_gps_links(
+            "1.0", "2.0", '<img src=x onerror=alert(1)>'
+        )
+        self.assertNotIn("<img src=x onerror", links["Address"])
+        self.assertIn("&lt;img", links["Address"])
+
+
 if __name__ == "__main__":
     unittest.main()

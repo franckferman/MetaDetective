@@ -10,6 +10,7 @@ Refactored  : Enhanced multithreading and code structure
 
 import argparse
 import datetime
+import html
 import http.client
 import json
 import os
@@ -1210,6 +1211,61 @@ class MetadataExporter:
     """Handles metadata export operations."""
 
     @staticmethod
+    def _safe_gps_links(lat: str, lon: str, address: str) -> Dict[str, str]:
+        """
+        Build HTML-safe anchor tags for the 'Address' and 'Map Link' fields.
+
+        Text nodes are HTML-escaped and URLs are percent-encoded so that
+        attacker-controlled metadata (e.g. a crafted Nominatim display_name)
+        cannot inject markup into the report.
+
+        Args:
+            lat: Latitude (already formatted by MetaDetective)
+            lon: Longitude (already formatted by MetaDetective)
+            address: Resolved address text (may be empty)
+
+        Returns:
+            Mapping of field name -> safe HTML snippet
+        """
+        links: Dict[str, str] = {}
+        lat_q = quote(str(lat), safe="")
+        lon_q = quote(str(lon), safe="")
+        map_url = f"https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat_q}&lon={lon_q}"
+        links["Map Link"] = (
+            f'<a href="{html.escape(map_url, quote=True)}" target="_blank" '
+            f'rel="noopener noreferrer">View on Map</a>'
+        )
+        if address:
+            search_url = NOMINATIM_SEARCH_URL + quote(address, safe="")
+            links["Address"] = (
+                f'<a href="{html.escape(search_url, quote=True)}" target="_blank" '
+                f'rel="noopener noreferrer">{html.escape(address)}</a>'
+            )
+        return links
+
+    @staticmethod
+    def _render_singular_value(field: str, value: str) -> str:
+        """
+        Render a single (unique) metadata value as safe HTML.
+
+        Every value is HTML-escaped. 'Map Link' values hold a plain URL and are
+        wrapped in a safe anchor.
+
+        Args:
+            field: Metadata field name
+            value: Value to render
+
+        Returns:
+            Safe HTML snippet
+        """
+        if field == "Map Link":
+            return (
+                f'<a href="{html.escape(value, quote=True)}" target="_blank" '
+                f'rel="noopener noreferrer">View on Map</a>'
+            )
+        return html.escape(value)
+
+    @staticmethod
     def export_metadata_to_html(
         args: Namespace,
         all_metadata: List[Dict[str, str]],
@@ -1264,23 +1320,27 @@ class MetadataExporter:
             for metadata in all_metadata:
                 html_parts.append('<div class="metadata-entry">')
 
+                gps_html: Dict[str, str] = {}
                 formatted_gps = metadata.get("Formatted GPS Position")
                 if formatted_gps:
                     try:
                         lat, lon = formatted_gps.split(", ")
                         address = AddressResolver.get_address_from_coords(lat, lon)
                         if address:
-                            encoded_address = quote(address)
-                            link_to_address = f"{NOMINATIM_SEARCH_URL}{encoded_address}"
-                            metadata["Address"] = f"<a href='{link_to_address}' target='_blank' rel='noopener noreferrer'>{address}</a>"
-                        metadata["Map Link"] = f"<a href='https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}' target='_blank' rel='noopener noreferrer'>View on Map</a>"
+                            metadata["Address"] = address
+                        metadata["Map Link"] = "View on Map"
+                        gps_html = MetadataExporter._safe_gps_links(lat, lon, address)
                     except ValueError:
                         pass
 
                 displayed_fields = 0
                 for field, value in metadata.items():
                     if field in FIELDS and value and not PatternMatcher.matches_any_pattern(value, ignore_patterns):
-                        html_parts.append(f'<div class="field-row"><span class="field-key">{field}</span><span class="field-val">{value}</span></div>')
+                        rendered = gps_html.get(field, html.escape(value))
+                        html_parts.append(
+                            f'<div class="field-row"><span class="field-key">{html.escape(field)}</span>'
+                            f'<span class="field-val">{rendered}</span></div>'
+                        )
                         displayed_fields += 1
 
                 if displayed_fields == 0:
@@ -1295,13 +1355,10 @@ class MetadataExporter:
                 if formatted_gps:
                     try:
                         lat, lon = formatted_gps.split(", ")
-                        address = AddressResolver.get_address_from_coords(lat, lon)
-                        if address:
-                            encoded_address = quote(address)
-                            link_to_address = f"{NOMINATIM_SEARCH_URL}{encoded_address}"
-                            metadata["Address"] = f"<a href='{link_to_address}' target='_blank' rel='noopener noreferrer'>{address}</a>"
-                        map_link = f"https://nominatim.openstreetmap.org/ui/reverse.html?lat={lat}&lon={lon}"
-                        metadata["Map Link"] = f"<a href='{map_link}' target='_blank' rel='noopener noreferrer'>View on Map</a>"
+                        # 'Address' is not part of UNIQUE_FIELDS, so it is never
+                        # displayed in singular mode: skip the Nominatim lookup
+                        # entirely (no wasted request, no coordinate leak).
+                        metadata["Map Link"] = NOMINATIM_LINK.format(lat=lat, lon=lon)
                     except ValueError:
                         pass
 
@@ -1324,14 +1381,18 @@ class MetadataExporter:
                     for value in values
                 }.keys()
                 if unique_cased_values:
-                    html_parts.append(f'<h3>{field}</h3>')
+                    html_parts.append(f'<h3>{html.escape(field)}</h3>')
                     if args.format == 'formatted':
                         html_parts.append('<ul>')
                         for unique_value in unique_cased_values:
-                            html_parts.append(f'<li>{unique_value}</li>')
+                            html_parts.append(f'<li>{MetadataExporter._render_singular_value(field, unique_value)}</li>')
                         html_parts.append('</ul>')
                     else:
-                        html_parts.append(f"<p>{', '.join(unique_cased_values)}</p>")
+                        rendered = ', '.join(
+                            MetadataExporter._render_singular_value(field, v)
+                            for v in unique_cased_values
+                        )
+                        html_parts.append(f"<p>{rendered}</p>")
 
         html_parts.append(f'<div class="footer">MetaDetective {__version__}</div>')
         html_parts.append('</div></body></html>')
