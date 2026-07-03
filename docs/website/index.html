@@ -434,7 +434,7 @@
 
 <!-- HERO -->
 <section id="hero">
-  <div class="hero-corner tl">UNIT: OSINT-INTEL<br>CASE #MD-2.0.4-2026</div>
+  <div class="hero-corner tl">UNIT: OSINT-INTEL<br>CASE #MD-2.0.6-2026</div>
   <div class="hero-corner tr">PYTHON 3 / EXIFTOOL<br>AGPL-3.0</div>
   <div class="hero-corner bl">zero python dependencies<br>single file deployment</div>
   <div class="hero-corner br">github.com/franckferman<br>/MetaDetective</div>
@@ -452,7 +452,7 @@
     <p class="hero-sub">Every file has a story.<br>MetaDetective reads it.</p>
 
     <div class="hero-badges">
-      <span class="badge red">v2.0.4</span>
+      <span class="badge red">v2.0.6</span>
       <span class="badge green">zero deps</span>
       <span class="badge">Python 3</span>
       <span class="badge">exiftool</span>
@@ -486,7 +486,7 @@
   <div class="container">
     <div class="section-head">
       <h2>Evidence Room</h2>
-      <span class="case-ref">REF: MD-CAP-2.0.4</span>
+      <span class="case-ref">REF: MD-CAP-2.0.6</span>
     </div>
 
     <div class="evidence-grid">
@@ -523,9 +523,10 @@
         <div class="exhibit-tag">
           <div class="exhibit-num">04</div>
           <span class="exhibit-label">Exhibit D</span>
+          <span class="new-tag">new</span>
         </div>
         <h3 class="exhibit-title">GPS Intelligence</h3>
-        <p class="exhibit-desc">DMS to decimal degrees conversion, Nominatim reverse geocoding with caching, direct map links. Physical location from a single file.</p>
+        <p class="exhibit-desc">DMS to decimal degrees conversion, Nominatim reverse geocoding (rate-limited, cached), direct map links. Opsec-aware: <span class="hi">--no-geocode</span> keeps coordinates off the wire, <span class="hi">--nominatim-url</span> targets a self-hosted server.</p>
       </div>
 
       <div class="exhibit">
@@ -567,6 +568,26 @@
         <p class="exhibit-desc"><span class="hi">--user-agent stealth</span> swaps the default UA for a realistic browser fingerprint. 13 presets: Chrome, Firefox, Safari, Edge, Android, iPhone, Googlebot. Or pass any custom string.</p>
       </div>
 
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">09</div>
+          <span class="exhibit-label">Exhibit I</span>
+          <span class="new-tag">new</span>
+        </div>
+        <h3 class="exhibit-title">Zero-Friction CLI</h3>
+        <p class="exhibit-desc">Pass a path or a URL, MetaDetective figures out the rest: <span class="hi">MetaDetective.py ./loot/</span> analyzes, <span class="hi">MetaDetective.py https://target.com/</span> scrapes. The classic <span class="hi">-d</span> / <span class="hi">-s -u</span> flags still work, safeguards intact.</p>
+      </div>
+
+      <div class="exhibit">
+        <div class="exhibit-tag">
+          <div class="exhibit-num">10</div>
+          <span class="exhibit-label">Exhibit J</span>
+          <span class="new-tag">new</span>
+        </div>
+        <h3 class="exhibit-title">Hardened Reports</h3>
+        <p class="exhibit-desc">Metadata is attacker-controlled. Every value is HTML-escaped in the report, so a booby-trapped document can't run code in the analyst's browser. Safe to open, safe to share.</p>
+      </div>
+
     </div>
   </div>
 </section>
@@ -576,7 +597,7 @@
   <div class="container">
     <div class="section-head">
       <h2>Field Deployment</h2>
-      <span class="case-ref">REF: MD-DEPLOY-2.0.4</span>
+      <span class="case-ref">REF: MD-DEPLOY-2.0.6</span>
     </div>
     <p style="font-size:.87rem; color:var(--text); margin-bottom:2rem; max-width:500px;">
       One file. Zero Python dependencies. Deploy anywhere Python 3 and exiftool are available.
@@ -636,7 +657,7 @@
   <div class="container">
     <div class="section-head">
       <h2>Investigation Protocols</h2>
-      <span class="case-ref">REF: MD-OPS-2.0.4</span>
+      <span class="case-ref">REF: MD-OPS-2.0.6</span>
     </div>
 
     <div class="protocol-grid">
@@ -647,8 +668,8 @@
           <span class="protocol-title">protocol_01 :: directory analysis</span>
         </div>
         <div class="protocol-body">
-<pre><span class="cm"># Singular deduplicated view</span>
-<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-d</span> <span class="cv">./loot/</span>
+<pre><span class="cm"># Just point at a folder - analysis mode is auto-detected</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cv">./loot/</span>
 
 <span class="cm"># PDF and DOCX only, filter noise</span>
 <span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-d</span> <span class="cv">./loot/</span> <span class="cf">-t</span> <span class="cv">pdf docx</span> <span class="cf">-i</span> <span class="cv">admin anonymous</span>
@@ -680,14 +701,11 @@
           <span class="protocol-title">protocol_03 :: web recon</span>
         </div>
         <div class="protocol-body">
-<pre><span class="cm"># Scan without downloading</span>
-<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">--scraping --scan</span> \
-    <span class="cf">--url</span> <span class="cv">https://target.com/</span>
+<pre><span class="cm"># Positional URL = scraping mode. Scan without downloading</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cv">https://target.com/</span> <span class="cf">--scan</span>
 
-<span class="cm"># Download PDFs, depth 2, 8 threads</span>
-<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">--scraping</span> \
-    <span class="cf">--url</span> <span class="cv">https://target.com/</span> \
-    <span class="cf">--download-dir</span> <span class="cv">~/loot/</span> \
+<span class="cm"># Download (defaults: ./loot/, depth 1), tune depth/threads</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cv">https://target.com/</span> \
     <span class="cf">--extensions</span> <span class="cv">pdf docx</span> <span class="cf">--depth</span> <span class="cv">2</span> <span class="cf">--threads</span> <span class="cv">8</span></pre>
         </div>
       </div>
@@ -703,8 +721,8 @@
     <span class="cf">-t</span> <span class="cv">heic heif jpg</span> \
     <span class="cf">--parse-only</span> <span class="cv">'GPS Position' 'Map Link'</span>
 
-<span class="cm"># HTML report with reverse geocoding</span>
-<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-f</span> <span class="cv">photo.heic</span> <span class="cf">-e html</span></pre>
+<span class="cm"># HTML report, coordinates kept off the wire (no Nominatim)</span>
+<span class="cp">$ </span><span class="cc">python3 MetaDetective.py</span> <span class="cf">-f</span> <span class="cv">photo.heic</span> <span class="cf">-e html --no-geocode</span></pre>
         </div>
       </div>
 
@@ -717,7 +735,7 @@
   <div class="container">
     <div class="section-head">
       <h2>Interrogation Room</h2>
-      <span class="case-ref">REF: MD-QA-2.0.4</span>
+      <span class="case-ref">REF: MD-QA-2.0.6</span>
     </div>
 
     <div class="faq-wrap">
@@ -835,7 +853,7 @@
   </div>
   <div class="footer-bottom">
     <span>&copy; 2026 Franck FERMAN &nbsp;|&nbsp; <a href="https://github.com/franckferman/MetaDetective/blob/stable/LICENSE" target="_blank" rel="noopener" style="color:var(--paper-faint)">AGPL-3.0</a></span>
-    <span class="case-badge">CASE #MD-2.0.4 &nbsp; STATUS: ACTIVE</span>
+    <span class="case-badge">CASE #MD-2.0.6 &nbsp; STATUS: ACTIVE</span>
   </div>
 </footer>
 
