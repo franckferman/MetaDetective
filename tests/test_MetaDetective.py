@@ -458,5 +458,38 @@ class TestHtmlExportEscaping(unittest.TestCase):
         self.assertIn("&lt;img", links["Address"])
 
 
+# ============================================================================
+# Geocoding opt-out and URL auto-detection
+# ============================================================================
+
+class TestGeocodeOptOut(unittest.TestCase):
+
+    def test_no_geocode_short_circuits_network(self):
+        original = md.GEOCODE_ENABLED
+        try:
+            md.GEOCODE_ENABLED = False
+            with patch("src.MetaDetective.MetaDetective.http.client.HTTPSConnection") as mock_conn:
+                result = md.AddressResolver.get_address_from_coords("47.0", "10.0")
+                self.assertEqual(result, "")
+                mock_conn.assert_not_called()
+        finally:
+            md.GEOCODE_ENABLED = original
+            md.AddressResolver.clear_cache()
+
+
+class TestLooksLikeUrl(unittest.TestCase):
+
+    def test_http_and_https_are_urls(self):
+        self.assertTrue(md.looks_like_url("http://example.com"))
+        self.assertTrue(md.looks_like_url("https://example.com/x"))
+        self.assertTrue(md.looks_like_url("HTTPS://EXAMPLE.COM"))
+
+    def test_paths_are_not_urls(self):
+        self.assertFalse(md.looks_like_url("./loot"))
+        self.assertFalse(md.looks_like_url("/home/user/docs"))
+        self.assertFalse(md.looks_like_url("report.pdf"))
+        self.assertFalse(md.looks_like_url("ftp://example.com/f"))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -73,6 +73,8 @@ EXIFTOOL_NOT_INSTALLED = "Error: exiftool is not installed. Please install it to
 EXIFTOOL_EXECUTION_ERROR = "Error: exiftool encountered an error."
 
 NOMINATIM_HOST = "nominatim.openstreetmap.org"
+NOMINATIM_SCHEME = "https"
+GEOCODE_ENABLED = True
 USER_AGENT = f'MetaDetective/{__version__}'
 
 UA_PRESETS = {
@@ -99,6 +101,8 @@ DEFAULT_WORKER_TIMEOUT = 1.0
 DEFAULT_SHUTDOWN_TIMEOUT = 5.0
 DEFAULT_RATE_LIMIT = 5
 DEFAULT_NUM_THREADS = 4
+DEFAULT_DEPTH = 1
+DEFAULT_DOWNLOAD_DIR = "loot"
 MAX_FILENAME_LENGTH = 16
 MAX_RETRIES = 3
 
@@ -516,6 +520,8 @@ class AddressResolver:
     # Class-level cache to avoid repeated requests for same coordinates
     _cache: Dict[Tuple[str, str], str] = {}
     _cache_lock = threading.Lock()
+    # Nominatim usage policy: at most 1 request per second, shared across threads
+    _rate_limiter = RateLimiter(1.0)
 
     @classmethod
     def get_address_from_coords(cls, lat: str, lon: str, timeout: int = DEFAULT_HTTP_TIMEOUT) -> str:
@@ -531,6 +537,9 @@ class AddressResolver:
         Returns:
             Address as a string, or empty string if error
         """
+        if not GEOCODE_ENABLED:
+            return ""
+
         try:
             lat_float = float(lat)
             lon_float = float(lon)
@@ -548,7 +557,11 @@ class AddressResolver:
                 return cls._cache[cache_key]
 
         try:
-            conn = http.client.HTTPSConnection(NOMINATIM_HOST, timeout=timeout)
+            cls._rate_limiter.wait()
+            if NOMINATIM_SCHEME == "http":
+                conn = http.client.HTTPConnection(NOMINATIM_HOST, timeout=timeout)
+            else:
+                conn = http.client.HTTPSConnection(NOMINATIM_HOST, timeout=timeout)
             headers = {'User-Agent': USER_AGENT}
             endpoint = NOMINATIM_ENDPOINT.format(lat=lat_normalized, lon=lon_normalized)
             conn.request("GET", endpoint, headers=headers)
@@ -1701,6 +1714,64 @@ def valid_url(url: str) -> str:
     return url
 
 
+def looks_like_url(value: str) -> bool:
+    """
+    Return True if the value looks like an http(s) URL.
+
+    Args:
+        value: The string to test
+
+    Returns:
+        True if the value starts with http:// or https://
+    """
+    return bool(re.match(r'^https?://', value, re.IGNORECASE))
+
+
+def resolve_positional_target(parser: argparse.ArgumentParser, args: Namespace) -> None:
+    """
+    Resolve the positional TARGET into an explicit mode.
+
+    A http(s):// URL enables scraping mode; an existing directory or file
+    enables analysis mode. Incompatible combinations raise a parser error so
+    that safeguards (no web scan on a local path, no analysis flags on a URL)
+    are preserved.
+
+    Args:
+        parser: The argument parser, used for consistent error reporting
+        args: Parsed arguments (modified in-place)
+    """
+    target = args.target
+
+    if looks_like_url(target):
+        if args.directory or args.files or args.type != ['all'] or args.ignore:
+            parser.error(
+                "A URL target enables scraping mode and cannot be combined with analysis "
+                "options (-d/--directory, -f/--files, -t/--type, -i/--ignore)."
+            )
+        if args.url and args.url != target:
+            parser.error("Conflicting URLs provided as positional target and --url.")
+        try:
+            valid_url(target)
+        except argparse.ArgumentTypeError as exc:
+            parser.error(str(exc))
+        args.scraping = True
+        args.url = target
+    else:
+        if args.scraping or args.url or args.scan or args.download_dir:
+            parser.error(
+                "A directory/file target enables analysis mode and cannot be combined with "
+                "scraping options (-s/--scraping, -u/--url, --scan, --download-dir)."
+            )
+        if args.directory or args.files:
+            parser.error("Do not combine a positional target with -d/--directory or -f/--files.")
+        if os.path.isdir(target):
+            args.directory = target
+        elif os.path.isfile(target):
+            args.files = [target]
+        else:
+            parser.error(f"Target '{target}' is not a URL, an existing directory, or an existing file.")
+
+
 # ============================================================================
 # Main Functions
 # ============================================================================
@@ -1840,6 +1911,11 @@ def main():
     parser = argparse.ArgumentParser(
         description="Retrieve and display metadata from files using exiftool.",
         epilog="Example commands:\n\n"
+               "# Quick shortcuts (positional target, auto-detected):\n"
+               "python3 MetaDetective.py ./loot/                      # analyze a directory\n"
+               "python3 MetaDetective.py report.pdf                   # analyze a single file\n"
+               "python3 MetaDetective.py https://target.com/ --scan   # scrape a site\n"
+               "\n"
                "# Analysis:\n"
                "   # Analyze metadata in a specified directory:\n"
                "python3 MetaDetective.py -d path/to/directory\n"
@@ -1861,13 +1937,20 @@ def main():
         formatter_class=argparse.RawTextHelpFormatter
     )
 
+    parser.add_argument(
+        'target', nargs='?', metavar='TARGET',
+        help="Positional shortcut, auto-detected:\n"
+             "  - a directory or file  -> analysis mode (like -d / -f)\n"
+             "  - an http(s):// URL    -> scraping mode (like -s -u)"
+    )
+
     scraping_group = parser.add_argument_group('scraping options', 'Options for scraping files containing potential metadata from a website.')
     scraping_group.add_argument('-s', '--scraping', action='store_true', help="Argument required to activate scraping mode.")
     scraping_group.add_argument('-u', "--url", type=valid_url, help="Site url for scraping.")
     scraping_group.add_argument("--scan", action="store_true", help="Scans the website and displays information and statistics without downloading files.")
     scraping_group.add_argument('--extensions', nargs='+', type=str.lower, help='File extensions to filter by, e.g., --extensions pdf jpg png')
-    scraping_group.add_argument("--depth", type=int, default=0, help="Depth of links to follow on the site.")
-    scraping_group.add_argument("--download-dir", type=valid_directory, help="Directory where files that have been scraped should be stored.")
+    scraping_group.add_argument("--depth", type=int, default=DEFAULT_DEPTH, help=f"Depth of links to follow on the site (default: {DEFAULT_DEPTH}).")
+    scraping_group.add_argument("--download-dir", type=valid_output_directory, help=f"Directory to store scraped files (created if missing). Defaults to ./{DEFAULT_DOWNLOAD_DIR}/ when neither --scan nor --download-dir is given.")
     scraping_group.add_argument("--follow-extern", action="store_true", help="Follow external links.")
     scraping_group.add_argument("--threads", type=int, default=DEFAULT_NUM_THREADS, help="Number of threads to use (1-100).")
     scraping_group.add_argument("--rate", type=int, default=DEFAULT_RATE_LIMIT, help="Maximum number of requests per second (0.1-1000).")
@@ -1892,6 +1975,8 @@ def main():
     display_group.add_argument('--summary', action='store_true', help="Show a statistical summary: file count, unique identities, emails, GPS exposure, tools, date range.")
     display_group.add_argument('--timeline', action='store_true', help="Display a chronological timeline of document creation and modification events.")
     display_group.add_argument('--no-banner', action='store_true', help="Suppress the ASCII banner. Useful for scripting and pipeline integration.")
+    display_group.add_argument('--no-geocode', action='store_true', help="Disable GPS reverse geocoding. No coordinates are sent to Nominatim/OpenStreetMap; raw GPS values are still shown.")
+    display_group.add_argument('--nominatim-url', metavar='URL', help="Base URL of a Nominatim reverse-geocoding server (e.g. https://nominatim.example.com). Default: public OpenStreetMap server.")
 
     export_group = parser.add_argument_group('export options', 'Options for exporting results.')
     export_group.add_argument('-e', '--export', nargs='?', const='html', choices=['html', 'txt', 'json'], default=None, help="Export results. Default format is HTML. Text (txt) and JSON (json) exports are also possible.")
@@ -1904,14 +1989,35 @@ def main():
         parser.print_help()
         sys.exit(0)
 
+    # Resolve the positional TARGET (URL -> scraping, directory/file -> analysis).
+    if args.target is not None:
+        resolve_positional_target(parser, args)
+
+    # Reverse-geocoding configuration (analysis / export only).
+    global GEOCODE_ENABLED, NOMINATIM_HOST, NOMINATIM_SCHEME
+    if args.no_geocode:
+        GEOCODE_ENABLED = False
+    if args.nominatim_url:
+        parsed_nominatim = urlparse(args.nominatim_url)
+        if parsed_nominatim.scheme not in ('http', 'https') or not parsed_nominatim.netloc:
+            parser.error("--nominatim-url must be a full http(s):// URL, e.g. https://nominatim.example.com")
+        NOMINATIM_SCHEME = parsed_nominatim.scheme
+        NOMINATIM_HOST = parsed_nominatim.netloc
+
     if args.scraping:
         if args.directory or args.files or args.ignore:
             parser.error("Analysis arguments (--directory/-d, --files/-f, and --ignore/-i) cannot be used with scrapping options (--scraping/-s).")
 
         if args.scan and args.download_dir:
-            parser.error("The scan (--scan) and download (--download-dir) arguments cannot be specified together. Choose between one or the other mode in scraping mode, but not both.")
+            parser.error("The scan (--scan) and download (--download-dir) arguments cannot be specified together. Choose one or the other in scraping mode, but not both.")
         elif not args.scan and not args.download_dir:
-            parser.error("You must choose at least between the scan (--scan) or download (--download-dir) argument in scraping mode.")
+            # No mode chosen: default to download mode into ./loot/ (created if missing).
+            try:
+                args.download_dir = valid_output_directory(DEFAULT_DOWNLOAD_DIR)
+            except argparse.ArgumentTypeError as exc:
+                parser.error(str(exc))
+            if '--no-banner' not in sys.argv:
+                print(f"[*] No --scan/--download-dir given: downloading to default './{DEFAULT_DOWNLOAD_DIR}/'.")
 
         if not args.url:
             parser.error("The url choice argument (-u or --url) is required for scraping mode.")
@@ -1973,6 +2079,9 @@ def main():
             parser.error("The directory (--directory/-d) and files (--files/-f) arguments cannot be specified together. Choose between one or the other mode in analysis mode, but not both.")
 
         ignore_patterns = args.ignore if args.ignore else []
+
+        if args.no_geocode and '--no-banner' not in sys.argv:
+            print("[*] Reverse geocoding disabled (--no-geocode): GPS coordinates are not sent to Nominatim.")
 
         if args.display == 'all' and args.format:
             parser.error("The formatting (--format) argument is not compatible with the 'all' display mode (--display all).")
