@@ -623,7 +623,10 @@
 
 <span class="cm"># Install exiftool if needed</span>
 <span class="cp">$ </span><span class="cc">sudo apt install</span> <span class="cv">libimage-exiftool-perl</span>   <span class="cm"># Debian / Ubuntu / Kali</span>
-<span class="cp">$ </span><span class="cc">brew install</span> <span class="cv">exiftool</span>                        <span class="cm"># macOS</span></pre>
+<span class="cp">$ </span><span class="cc">sudo pacman -S</span> <span class="cv">perl-image-exiftool</span>        <span class="cm"># Arch</span>
+<span class="cp">$ </span><span class="cc">sudo emerge -av</span> <span class="cv">media-libs/exiftool</span>       <span class="cm"># Gentoo</span>
+<span class="cp">$ </span><span class="cc">brew install</span> <span class="cv">exiftool</span>                     <span class="cm"># macOS</span>
+<span class="cp">$ </span><span class="cc">winget install</span> <span class="cv">OliverBetz.ExifTool</span>        <span class="cm"># Windows</span></pre>
         </div>
 
         <div class="tab-content" id="tab-pip">
@@ -797,6 +800,36 @@
         </button>
         <div class="faq-a"><div class="faq-a-inner">
           With <span class="hi">--display singular</span>: <span class="hi">{"unique": {"Author": ["name1", "name2"]}}</span> - deduplicated values per field, ready to pivot. With <span class="hi">--display all</span>: <span class="hi">{"files": [{...}, ...]}</span> - one object per file. Both include tool version and generation timestamp.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Does it leak the target's GPS coordinates to a third party?</span>
+          <span class="faq-q-icon">&#9658;</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          Reverse geocoding turns GPS coordinates into a street address via OpenStreetMap's Nominatim - which means those coordinates leave your machine. Since 2.0.6, requests are rate-limited to 1/second and cached, you can point at a self-hosted server with <span class="hi">--nominatim-url</span>, or disable it entirely with <span class="hi">--no-geocode</span> to keep coordinates off the wire. The raw GPS is still shown either way.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Is the HTML report safe to open?</span>
+          <span class="faq-q-icon">&#9658;</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          Yes. Metadata is attacker-controlled - a booby-trapped document could carry an <span class="hi">&lt;img onerror&gt;</span> or <span class="hi">&lt;script&gt;</span> payload in its Author or Title field. Since 2.0.6, every value is HTML-escaped in the report, so opening or sharing it can't execute code in your browser.
+        </div></div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          <span class="faq-q-text">Do I have to remember -d, --scraping and --url?</span>
+          <span class="faq-q-icon">&#9658;</span>
+        </button>
+        <div class="faq-a"><div class="faq-a-inner">
+          No. Just pass the target: a path runs analysis (<span class="hi">MetaDetective.py ./loot/</span>), an http(s) URL runs scraping (<span class="hi">MetaDetective.py https://target.com/</span>). The classic <span class="hi">-d</span> / <span class="hi">-s -u</span> flags still work, and mixing analysis and scraping options is rejected so the safeguards stay intact.
         </div></div>
       </div>
 

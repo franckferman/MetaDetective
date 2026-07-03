@@ -84,6 +84,12 @@ It was built as a replacement for Metagoofil, which dropped native metadata anal
 # Debian / Ubuntu / Kali
 sudo apt install libimage-exiftool-perl
 
+# Arch
+sudo pacman -S perl-image-exiftool
+
+# Gentoo
+sudo emerge -av media-libs/exiftool
+
 # macOS
 brew install exiftool
 
