@@ -661,7 +661,7 @@ class WebScraper:
             self.extensions = {ext.lower() for ext in EXTENSIONS}
         self.css_js_pattern = re.compile(r"\.(css|js)($|\?|#)")
 
-    def fetch_links_from_url(self, url: str, timeout: int = DEFAULT_HTTP_TIMEOUT) -> List[str]:
+    def fetch_links_from_url(self, url: str, timeout: int = DEFAULT_HTTP_TIMEOUT) -> Tuple[str, List[str]]:
         """
         Fetch all links from a given URL.
 
@@ -670,14 +670,19 @@ class WebScraper:
             timeout: Request timeout in seconds
 
         Returns:
-            List of links found on the page
+            Tuple of (effective URL after redirects, links found on the page).
+            The effective URL must be used as the base for resolving relative
+            links, since e.g. GitHub Pages 301-redirects '/repo' to '/repo/'.
         """
         try:
             request = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
             with urllib.request.urlopen(request, timeout=timeout) as response:
+                # Final URL after any redirects; relative links resolve against it.
+                effective_url = response.geturl() or url
+
                 content_type = response.headers.get('Content-Type', '').split(';')[0]
                 if 'text' not in content_type and 'application' not in content_type:
-                    return []
+                    return effective_url, []
 
                 raw_data = response.read()
 
@@ -688,7 +693,7 @@ class WebScraper:
                         data = raw_data.decode('latin-1')
                     except UnicodeDecodeError:
                         Logger.warning(f"Unable to decode content from {url}")
-                        return []
+                        return effective_url, []
 
                 parser = LinkParser()
                 parser.feed(data)
@@ -701,20 +706,20 @@ class WebScraper:
                     if not link or link.strip() == '':
                         continue
                     filtered_links.append(link)
-                return filtered_links
+                return effective_url, filtered_links
 
         except urllib.error.URLError as e:
             if url.startswith("mailto:"):
                 Logger.info(f"Found mailto link {url}")
             else:
                 Logger.error(f"Unable to open {url} Reason: {e}")
-            return []
+            return url, []
         except urllib.error.HTTPError as e:
             Logger.error(f"HTTP Error for URL {url} Reason: {e.code} - {e.reason}")
-            return []
+            return url, []
         except Exception as e:
             Logger.error(f"Unexpected error fetching {url} Reason: {e}")
-            return []
+            return url, []
 
     def is_valid_file_link(self, link: str) -> bool:
         """
@@ -883,12 +888,12 @@ class URLProcessor:
 
         self.rate_limiter.wait()
 
-        links = self.scraper.fetch_links_from_url(task.url)
+        base_url, links = self.scraper.fetch_links_from_url(task.url)
 
         file_links = []
         for link in links:
             if self.scraper.is_valid_file_link(link):
-                absolute_url = urljoin(task.url, link)
+                absolute_url = urljoin(base_url, link)
                 file_links.append(absolute_url)
 
         if self.download_dir and not self.scan:
@@ -910,7 +915,7 @@ class URLProcessor:
                 if not link.startswith(('http://', 'https://', '/')):
                     continue
 
-                absolute_link = urljoin(task.url, link)
+                absolute_link = urljoin(base_url, link)
                 parsed_link = urlparse(absolute_link)
 
                 # Validate that it's an HTTP/HTTPS URL

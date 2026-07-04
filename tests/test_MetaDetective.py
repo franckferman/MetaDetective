@@ -491,5 +491,27 @@ class TestLooksLikeUrl(unittest.TestCase):
         self.assertFalse(md.looks_like_url("ftp://example.com/f"))
 
 
+class TestWebScraperRedirectBase(unittest.TestCase):
+    """Relative links must resolve against the URL *after* redirects."""
+
+    @patch("src.MetaDetective.MetaDetective.urllib.request.urlopen")
+    def test_relative_links_resolve_against_effective_url(self, mock_urlopen):
+        # Simulate GitHub Pages 301-redirecting '/repo' -> '/repo/'
+        resp = mock_urlopen.return_value.__enter__.return_value
+        resp.geturl.return_value = "https://host/repo/"
+        resp.headers.get.return_value = "text/html"
+        resp.read.return_value = b'<a href="lab/report.pdf">go</a>'
+
+        scraper = md.WebScraper(["pdf"])
+        base, links = scraper.fetch_links_from_url("https://host/repo")
+
+        self.assertEqual(base, "https://host/repo/")
+        self.assertIn("lab/report.pdf", links)
+        self.assertEqual(
+            md.urljoin(base, links[0]),
+            "https://host/repo/lab/report.pdf",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
