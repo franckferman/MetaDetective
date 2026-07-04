@@ -243,6 +243,15 @@ jq '.unique.Author' MetaDetective_Export-*.json
 
 MetaDetective can crawl a target website, discover downloadable files (PDF, DOCX, XLSX, images, etc.), and download them for local metadata analysis.
 
+**Try it live** — this project's own site hosts a hidden practice lab (metadata-rich sample documents). Point MetaDetective at it and analyze what comes back:
+
+```bash
+python3 MetaDetective.py https://franckferman.github.io/MetaDetective/
+python3 MetaDetective.py ./loot/ --summary
+```
+
+You'll recover planted identities, emails, tools, and GPS coordinates. (Keep the trailing slash, or use a version >= the post-2.0.6 fix that follows the redirect.)
+
 **Two scraping modes:**
 
 - **`--download-dir`** - Download files to a local directory for analysis. This is the primary mode.
