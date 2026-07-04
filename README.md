@@ -250,7 +250,7 @@ python3 MetaDetective.py https://franckferman.github.io/MetaDetective/
 python3 MetaDetective.py ./loot/ --summary
 ```
 
-You'll recover planted identities, emails, tools, and GPS coordinates. (Keep the trailing slash, or use a version >= the post-2.0.6 fix that follows the redirect.)
+You'll recover planted identities, emails, tools, and GPS coordinates.
 
 **Two scraping modes:**
 
