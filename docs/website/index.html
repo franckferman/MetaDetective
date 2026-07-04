@@ -516,17 +516,16 @@
           <span class="exhibit-label">Exhibit C</span>
         </div>
         <h3 class="exhibit-title">Direct Web Scraping</h3>
-        <p class="exhibit-desc">Crawl target sites directly. No search engine in the middle, no IP blocks. Multithreaded, configurable depth, rate-limited, extension-filtered.</p>
+        <p class="exhibit-desc">Crawl target sites directly - unlike Metagoofil, which only surfaces files through Google dorking (rate limits, CAPTCHAs, IP blocks, index-dependent results). No search engine in the middle. Multithreaded, configurable depth, rate-limited, extension-filtered.</p>
       </div>
 
       <div class="exhibit">
         <div class="exhibit-tag">
           <div class="exhibit-num">04</div>
           <span class="exhibit-label">Exhibit D</span>
-          <span class="new-tag">new</span>
         </div>
         <h3 class="exhibit-title">GPS Intelligence</h3>
-        <p class="exhibit-desc">DMS to decimal degrees conversion, Nominatim reverse geocoding (rate-limited, cached), direct map links. Opsec-aware: <span class="hi">--no-geocode</span> keeps coordinates off the wire, <span class="hi">--nominatim-url</span> targets a self-hosted server.</p>
+        <p class="exhibit-desc">DMS to decimal degrees conversion, Nominatim reverse geocoding with caching, direct map links. Physical location from a single file.</p>
       </div>
 
       <div class="exhibit">
@@ -576,16 +575,6 @@
         </div>
         <h3 class="exhibit-title">Zero-Friction CLI</h3>
         <p class="exhibit-desc">Pass a path or a URL, MetaDetective figures out the rest: <span class="hi">MetaDetective.py ./loot/</span> analyzes, <span class="hi">MetaDetective.py https://target.com/</span> scrapes. The classic <span class="hi">-d</span> / <span class="hi">-s -u</span> flags still work, safeguards intact.</p>
-      </div>
-
-      <div class="exhibit">
-        <div class="exhibit-tag">
-          <div class="exhibit-num">10</div>
-          <span class="exhibit-label">Exhibit J</span>
-          <span class="new-tag">new</span>
-        </div>
-        <h3 class="exhibit-title">Hardened Reports</h3>
-        <p class="exhibit-desc">Metadata is attacker-controlled. Every value is HTML-escaped in the report, so a booby-trapped document can't run code in the analyst's browser. Safe to open, safe to share.</p>
       </div>
 
     </div>
@@ -759,7 +748,7 @@
           <span class="faq-q-icon">&#9658;</span>
         </button>
         <div class="faq-a"><div class="faq-a-inner">
-          Metagoofil relies on Google to find files - which means rate limiting, CAPTCHAs, and IP blocks. MetaDetective scrapes target sites directly. No search engine dependency, no infrastructure tax. It also extracts more fields, supports HEIC, JSON export, and selective parsing that Metagoofil never had.
+          Metagoofil surfaces files through Google dorking - unreliable by design: rate limits, CAPTCHAs, IP blocks, and results limited to whatever Google has indexed. It doesn't crawl the target itself, and it dropped native metadata analysis. MetaDetective scrapes target sites directly (no search engine dependency) and, above all, does the part Metagoofil no longer does: it parses, deduplicates, presents and exports the metadata (HTML / TXT / JSON), with selective parsing and HEIC support.
         </div></div>
       </div>
 
@@ -800,26 +789,6 @@
         </button>
         <div class="faq-a"><div class="faq-a-inner">
           With <span class="hi">--display singular</span>: <span class="hi">{"unique": {"Author": ["name1", "name2"]}}</span> - deduplicated values per field, ready to pivot. With <span class="hi">--display all</span>: <span class="hi">{"files": [{...}, ...]}</span> - one object per file. Both include tool version and generation timestamp.
-        </div></div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">
-          <span class="faq-q-text">Does it leak the target's GPS coordinates to a third party?</span>
-          <span class="faq-q-icon">&#9658;</span>
-        </button>
-        <div class="faq-a"><div class="faq-a-inner">
-          Reverse geocoding turns GPS coordinates into a street address via OpenStreetMap's Nominatim - which means those coordinates leave your machine. Since 2.0.6, requests are rate-limited to 1/second and cached, you can point at a self-hosted server with <span class="hi">--nominatim-url</span>, or disable it entirely with <span class="hi">--no-geocode</span> to keep coordinates off the wire. The raw GPS is still shown either way.
-        </div></div>
-      </div>
-
-      <div class="faq-item">
-        <button class="faq-q" onclick="toggleFaq(this)">
-          <span class="faq-q-text">Is the HTML report safe to open?</span>
-          <span class="faq-q-icon">&#9658;</span>
-        </button>
-        <div class="faq-a"><div class="faq-a-inner">
-          Yes. Metadata is attacker-controlled - a booby-trapped document could carry an <span class="hi">&lt;img onerror&gt;</span> or <span class="hi">&lt;script&gt;</span> payload in its Author or Title field. Since 2.0.6, every value is HTML-escaped in the report, so opening or sharing it can't execute code in your browser.
         </div></div>
       </div>
 
