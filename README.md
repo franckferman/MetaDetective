@@ -15,6 +15,13 @@
 </p>
 <p align="center"><b>Supported by <a href="https://iproyal.com/?r=848799">IPRoyal</a></b> &mdash; Proxy services for OSINT and security research.</p>
 
+<p align="center">
+  <a href="https://katanhack.fr/" target="_blank">
+    <img src="https://raw.githubusercontent.com/franckferman/MetaDetective/stable/docs/github/graphical_resources/katanhack.png" alt="Sponsored by KatanHack" width="180">
+  </a>
+</p>
+<p align="center"><b>Backed by <a href="https://katanhack.fr/">KatanHack</a></b> &mdash; Red Team, pentest, SOC & security governance.</p>
+
 <br>
 
 [![Contributors][contributors-shield]](https://github.com/franckferman/MetaDetective/graphs/contributors)
