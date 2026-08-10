@@ -455,11 +455,12 @@ MetaDetective is provided for educational and authorized security testing purpos
 
 ## Star History
 
-<a href="https://star-history.com/#franckferman/MetaDetective&Timeline">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=franckferman/MetaDetective&type=Timeline&theme=dark" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=franckferman/MetaDetective&type=Timeline" />
-  </picture>
+<a href="https://star-history.dera.page/#franckferman/MetaDetective&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=franckferman/MetaDetective&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=franckferman/MetaDetective&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=franckferman/MetaDetective&type=date&legend=top-left" />
+ </picture>
 </a>
 
 ---
