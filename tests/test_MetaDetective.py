@@ -513,5 +513,182 @@ class TestWebScraperRedirectBase(unittest.TestCase):
         )
 
 
+# ============================================================================
+# --curl-file (browser header import)
+# ============================================================================
+
+CHROME_BASH = r"""curl 'https://target.example/docs/' \
+  -H 'accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' \
+  -H 'accept-encoding: gzip, deflate, br, zstd' \
+  -H 'accept-language: en-US,en;q=0.9' \
+  -b 'session=abc123; cf_clearance=xyz' \
+  -H 'if-none-match: W/"1234"' \
+  -H 'sec-ch-ua: "Chromium";v="129", "Not=A?Brand";v="8"' \
+  -H 'sec-fetch-mode: navigate' \
+  -H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) Chrome/129.0.0.0 Safari/537.36'"""
+
+CHROME_CMD = (
+    'curl ^"https://target.example/docs/^" ^\n'
+    '  -H ^"accept: text/html^" ^\n'
+    '  -b ^"session=abc123; theme=dark^" ^\n'
+    '  -H ^"sec-ch-ua: ^\\^"Chromium^\\^";v=^\\^"129^\\^"^" ^\n'
+    '  -H ^"user-agent: Mozilla/5.0 Chrome/129^"'
+)
+
+
+class TestCurlProfileParse(unittest.TestCase):
+
+    def test_chrome_bash(self):
+        p = md.CurlProfile.parse(CHROME_BASH)
+        h = dict(p.headers)
+        self.assertEqual(p.url, "https://target.example/docs/")
+        self.assertEqual(p.scope_host, "target.example")
+        self.assertEqual(h["sec-ch-ua"], '"Chromium";v="129", "Not=A?Brand";v="8"')
+        self.assertEqual(h["Cookie"], "session=abc123; cf_clearance=xyz")
+        self.assertEqual(p.user_agent, "Mozilla/5.0 (X11; Linux x86_64) Chrome/129.0.0.0 Safari/537.36")
+
+    def test_unsafe_headers_dropped(self):
+        names = {n.lower() for n, _ in md.CurlProfile.parse(CHROME_BASH).headers}
+        self.assertNotIn("accept-encoding", names)
+        self.assertNotIn("if-none-match", names)
+
+    def test_chrome_cmd(self):
+        p = md.CurlProfile.parse(CHROME_CMD)
+        h = dict(p.headers)
+        self.assertEqual(p.url, "https://target.example/docs/")
+        self.assertEqual(h["accept"], "text/html")
+        self.assertEqual(h["sec-ch-ua"], '"Chromium";v="129"')
+        self.assertEqual(h["Cookie"], "session=abc123; theme=dark")
+
+    def test_ansi_c_quoting(self):
+        p = md.CurlProfile.parse("curl $'https://t.example/' -H $'cookie: a=it\\'s; b=\\u00e9'")
+        self.assertEqual(dict(p.headers)["Cookie"], "a=it's; b=é")
+
+    def test_cookie_header_and_flag_merged(self):
+        p = md.CurlProfile.parse("curl https://t.example -H 'Cookie: a=1' -b 'b=2'")
+        self.assertEqual(dict(p.headers)["Cookie"], "a=1; b=2")
+
+    def test_header_removal_and_empty_syntax(self):
+        p = md.CurlProfile.parse("curl https://t.example -H 'X-Remove:' -H 'X-Empty;'")
+        self.assertEqual(dict(p.headers), {"X-Empty": ""})
+
+    def test_last_duplicate_wins(self):
+        p = md.CurlProfile.parse("curl https://t.example -H 'Accept: a' -H 'accept: b'")
+        self.assertEqual(p.headers, [("accept", "b")])
+
+    def test_options_with_values_do_not_become_url(self):
+        p = md.CurlProfile.parse("curl -X GET --compressed -H 'A: 1' 'https://t.example/x'")
+        self.assertEqual(p.url, "https://t.example/x")
+
+    def test_rejects_non_curl(self):
+        with self.assertRaises(md.CurlParseError):
+            md.CurlProfile.parse("wget https://t.example")
+
+    def test_rejects_unterminated_quote(self):
+        with self.assertRaises(md.CurlParseError):
+            md.CurlProfile.parse("curl 'https://t.example")
+
+    def test_from_file_strips_bom(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8-sig") as f:
+            f.write(CHROME_BASH)
+        try:
+            self.assertEqual(md.CurlProfile.from_file(f.name).scope_host, "target.example")
+        finally:
+            os.unlink(f.name)
+
+    def test_from_file_missing(self):
+        with self.assertRaises(md.CurlParseError):
+            md.CurlProfile.from_file("/nonexistent/request.txt")
+
+
+class TestCurlProfileHeaders(unittest.TestCase):
+
+    def setUp(self):
+        self._saved = (md.CURL_PROFILE, md.USER_AGENT)
+        md.CURL_PROFILE = md.CurlProfile.parse(
+            "curl https://target.example/ -H 'Accept: text/html' "
+            "-H 'Authorization: Bearer t' -b 's=1' -H 'User-Agent: Browser/1'"
+        )
+        md.USER_AGENT = "Override/1"
+
+    def tearDown(self):
+        md.CURL_PROFILE, md.USER_AGENT = self._saved
+
+    def test_same_host_gets_credentials(self):
+        h = md.build_request_headers("https://TARGET.example/a.pdf")
+        self.assertEqual(h["Cookie"], "s=1")
+        self.assertEqual(h["Authorization"], "Bearer t")
+        self.assertEqual(h["Accept"], "text/html")
+
+    def test_other_host_gets_no_credentials(self):
+        h = md.build_request_headers("https://cdn.other.example/a.pdf")
+        self.assertNotIn("Cookie", h)
+        self.assertNotIn("Authorization", h)
+        self.assertEqual(h["Accept"], "text/html")
+
+    def test_user_agent_comes_from_global(self):
+        self.assertEqual(md.build_request_headers("https://target.example/")["User-Agent"], "Override/1")
+
+    def test_without_profile_only_user_agent(self):
+        md.CURL_PROFILE = None
+        self.assertEqual(md.build_request_headers("https://x.example/"), {"User-Agent": "Override/1"})
+
+
+class TestCurlProfileRedirect(unittest.TestCase):
+    """Credentials must not follow a redirect to another host."""
+
+    def test_cross_host_redirect_strips_credentials(self):
+        import http.server
+        import threading
+
+        seen = {}
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                host = self.headers.get("Host", "").split(":")[0]
+                seen[host] = dict(self.headers)
+                if host == "127.0.0.1":
+                    self.send_response(302)
+                    self.send_header("Location", f"http://localhost:{self.server.server_port}/next")
+                    self.end_headers()
+                else:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html")
+                    self.end_headers()
+                    self.wfile.write(b"ok")
+
+            def log_message(self, *args):
+                pass
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        try:
+            url = f"http://127.0.0.1:{server.server_port}/"
+            profile = md.CurlProfile.parse(f"curl {url} -H 'Accept: text/html' -b 's=1'")
+            req = md.urllib.request.Request(url, headers=profile.headers_for(url))
+            with patch.dict(os.environ, {"no_proxy": "*", "NO_PROXY": "*"}):
+                with profile.open(req, timeout=5) as resp:
+                    self.assertEqual(resp.read(), b"ok")
+        finally:
+            server.shutdown()
+            server.server_close()
+
+        self.assertEqual(seen["127.0.0.1"].get("Cookie"), "s=1")
+        self.assertNotIn("Cookie", seen["localhost"])
+        self.assertEqual(seen["localhost"].get("Accept"), "text/html")
+
+
+class TestCurlFileCli(unittest.TestCase):
+
+    def test_curl_file_requires_scraping_mode(self):
+        with tempfile.TemporaryDirectory() as d:
+            argv = ["MetaDetective", "-d", d, "--curl-file", "x.txt"]
+            with patch.object(md.sys, "argv", argv), patch("sys.stderr", new_callable=StringIO), \
+                    patch.object(md, "check_exiftool_installed"):
+                with self.assertRaises(SystemExit) as cm:
+                    md.main()
+        self.assertEqual(cm.exception.code, 2)
+
+
 if __name__ == "__main__":
     unittest.main()
