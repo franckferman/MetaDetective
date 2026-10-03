@@ -331,6 +331,7 @@ python3 MetaDetective.py -d ~/loot/ -e html -o ~/results/
 | `--rate` | `5` | Max requests per second (1-1000) |
 | `--follow-extern` | off | Follow links to external domains |
 | `--user-agent` | `MetaDetective/<ver>` | Custom or preset UA string |
+| `--curl-file` | - | Replay browser headers from a 'Copy as cURL' file (`-` for stdin) |
 
 ### Display modes
 
@@ -410,6 +411,29 @@ python3 MetaDetective.py --scraping --scan --url https://target.com/ --user-agen
 python3 MetaDetective.py --scraping --scan --url https://target.com/ \
   --user-agent 'Mozilla/5.0 (compatible; MyScanner/1.0)'
 ```
+
+### Browser headers (bot detection)
+
+Some sites block scrapers based on the whole set of request headers, not just the User-Agent. `--curl-file` replays the exact headers your browser sends:
+
+1. Open the target site in your browser (solve any challenge if prompted).
+2. Open the dev tools **Network** tab, reload, right-click the page request and choose **Copy > Copy as cURL** (bash or cmd both work).
+3. Paste it into a file and point MetaDetective at it:
+
+```bash
+python3 MetaDetective.py --scraping --scan --url https://target.com/ --curl-file request.txt
+
+# Or read the command from stdin (e.g. straight from the clipboard)
+pbpaste | python3 MetaDetective.py --scraping --scan --url https://target.com/ --curl-file -
+```
+
+- Every header is reused (`Accept`, `Accept-Language`, `Sec-Fetch-*`, `sec-ch-ua`, `Referer`, ...) along with cookies from `-H 'Cookie: ...'` or `-b`.
+- Cookies, `Authorization` and CSRF/API-key headers are only sent to the host the command was copied from, including across redirects, so they never leak to other sites with `--follow-extern`.
+- `Host`, `Content-Length`, `Accept-Encoding` and conditional headers (`If-None-Match`, ...) are dropped, since they only apply to the original request or would break response handling.
+- `--user-agent`, if also given, overrides the imported User-Agent.
+- Request bodies and non-GET methods in the command are ignored.
+
+> This defeats header- and cookie-based checks. It does not change the TLS/HTTP2 fingerprint of Python's HTTP client, so services that fingerprint the connection itself may still block the scraper. Imported cookies are session credentials: keep the file private and delete it when done.
 
 ### Reverse geocoding and privacy
 

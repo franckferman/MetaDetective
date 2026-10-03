@@ -614,6 +614,360 @@ class AddressResolver:
 
 
 # ============================================================================
+# Browser header import (--curl-file)
+# ============================================================================
+
+class CurlParseError(ValueError):
+    """Raised when a 'Copy as cURL' command cannot be parsed."""
+
+
+class CurlProfile:
+    """
+    Request headers imported from a browser's 'Copy as cURL' command.
+
+    Replaying the exact header set a real browser sends (Accept, Sec-Fetch-*,
+    sec-ch-ua, cookies, ...) gets past bot-detection checks that a lone
+    User-Agent change does not. Credential headers (cookies, auth, CSRF
+    tokens) are only ever sent to the host the command was copied from.
+    """
+
+    # Headers that only make sense for the original request, or that would
+    # break urllib (it does not decompress gzip/br/zstd, and conditional
+    # headers turn responses into bodiless 304s).
+    DROPPED_HEADERS = {
+        'host', 'content-length', 'connection', 'accept-encoding', 'te',
+        'if-none-match', 'if-modified-since', 'if-match', 'if-unmodified-since',
+        'if-range', 'range', 'expect', 'transfer-encoding', 'upgrade',
+    }
+
+    # Headers that carry credentials and must stay on the source host.
+    SENSITIVE_HEADERS = {
+        'cookie', 'authorization', 'proxy-authorization',
+        'x-csrf-token', 'x-xsrf-token', 'x-csrftoken', 'x-api-key',
+    }
+
+    # curl options that consume the next token as their value.
+    OPTIONS_WITH_VALUE = {
+        '-H', '--header', '-b', '--cookie', '-A', '--user-agent', '-e', '--referer',
+        '-X', '--request', '-d', '--data', '--data-raw', '--data-binary',
+        '--data-urlencode', '--data-ascii', '-F', '--form', '-o', '--output',
+        '-x', '--proxy', '-u', '--user', '-m', '--max-time', '--connect-timeout',
+        '--cacert', '--cert', '--key', '-w', '--write-out', '-T', '--upload-file',
+        '--resolve', '-r', '--range', '--url', '-c', '--cookie-jar',
+    }
+
+    def __init__(self, url: Optional[str], headers: List[Tuple[str, str]]):
+        self.url = url
+        self.headers = headers
+        self.scope_host = urlparse(url).hostname if url else None
+        self._opener = None
+
+    # -- Parsing ------------------------------------------------------------
+
+    @staticmethod
+    def _tokenize(text: str) -> List[str]:
+        """
+        Split a POSIX shell command line into words.
+
+        Handles single quotes, double quotes, backslash escapes, line
+        continuations and bash ANSI-C quoting ($'...'), which Chrome uses
+        when a value contains special characters. shlex lacks the latter.
+        """
+        tokens: List[str] = []
+        current: List[str] = []
+        in_token = False
+        i, n = 0, len(text)
+
+        while i < n:
+            ch = text[i]
+            if ch == '\\' and i + 1 < n and text[i + 1] in '\r\n':
+                # Line continuation.
+                i += 2
+                if text[i - 1] == '\r' and i < n and text[i] == '\n':
+                    i += 1
+                continue
+            if ch.isspace():
+                if in_token:
+                    tokens.append(''.join(current))
+                    current, in_token = [], False
+                i += 1
+                continue
+            in_token = True
+            if ch == "'":
+                end = text.find("'", i + 1)
+                if end == -1:
+                    raise CurlParseError("Unterminated single quote in curl command.")
+                current.append(text[i + 1:end])
+                i = end + 1
+            elif ch == '"':
+                i += 1
+                while i < n and text[i] != '"':
+                    if text[i] == '\\' and i + 1 < n and text[i + 1] in '"\\$`\n':
+                        if text[i + 1] != '\n':
+                            current.append(text[i + 1])
+                        i += 2
+                    else:
+                        current.append(text[i])
+                        i += 1
+                if i >= n:
+                    raise CurlParseError("Unterminated double quote in curl command.")
+                i += 1
+            elif ch == '$' and i + 1 < n and text[i + 1] == "'":
+                i += 2
+                raw: List[str] = []
+                while i < n and text[i] != "'":
+                    if text[i] == '\\' and i + 1 < n:
+                        raw.append(text[i:i + 2])
+                        i += 2
+                    else:
+                        raw.append(text[i])
+                        i += 1
+                if i >= n:
+                    raise CurlParseError("Unterminated $'...' quote in curl command.")
+                i += 1
+                try:
+                    current.append(''.join(raw).encode('latin-1', 'backslashreplace').decode('unicode_escape'))
+                except UnicodeDecodeError as exc:
+                    raise CurlParseError(f"Invalid escape sequence in $'...' quote: {exc}")
+            elif ch == '\\' and i + 1 < n:
+                current.append(text[i + 1])
+                i += 2
+            else:
+                current.append(ch)
+                i += 1
+
+        if in_token:
+            tokens.append(''.join(current))
+        return tokens
+
+    @staticmethod
+    def _unescape_cmd(text: str) -> str:
+        """
+        Convert Chrome's 'Copy as cURL (cmd)' Windows syntax to POSIX syntax.
+
+        cmd.exe escapes every special character with '^' (including the
+        quotes: ^"...^") and continues lines with a trailing '^'. Inner
+        quotes are written as \\^", which becomes \\" once carets are gone.
+        """
+        text = re.sub(r'\^\r?\n', ' ', text)
+        return re.sub(r'\^(.)', r'\1', text, flags=re.DOTALL)
+
+    @staticmethod
+    def _looks_like_cmd(text: str) -> bool:
+        return '^"' in text or bool(re.search(r'\^\r?\n', text))
+
+    @classmethod
+    def parse(cls, text: str) -> 'CurlProfile':
+        """
+        Parse a curl command (as produced by browser dev tools) into a profile.
+
+        Args:
+            text: The full curl command line
+
+        Returns:
+            A CurlProfile with the URL and the headers to replay
+
+        Raises:
+            CurlParseError: If the text is not a usable curl command
+        """
+        text = text.strip()
+        if text.startswith('\ufeff'):
+            text = text[1:]
+        if cls._looks_like_cmd(text):
+            text = cls._unescape_cmd(text)
+
+        tokens = cls._tokenize(text)
+        if not tokens or os.path.basename(tokens[0]).lower() not in ('curl', 'curl.exe'):
+            raise CurlParseError("File does not contain a curl command (it must start with 'curl').")
+
+        url: Optional[str] = None
+        headers: List[Tuple[str, str]] = []
+        cookies: List[str] = []
+        ignored: Set[str] = set()
+
+        i = 1
+        while i < len(tokens):
+            tok = tokens[i]
+            value: Optional[str] = None
+
+            if tok.startswith('--') or tok in cls.OPTIONS_WITH_VALUE:
+                opt = tok
+            elif tok.startswith('-') and len(tok) > 2 and tok[:2] in cls.OPTIONS_WITH_VALUE:
+                # Attached short option value, e.g. -H'Accept: */*'
+                opt, value = tok[:2], tok[2:]
+            elif tok.startswith('-') and len(tok) > 1:
+                opt = tok
+            else:
+                if url is None:
+                    url = tok
+                i += 1
+                continue
+
+            if opt in cls.OPTIONS_WITH_VALUE and value is None:
+                if i + 1 >= len(tokens):
+                    raise CurlParseError(f"Option {opt} is missing its value.")
+                value = tokens[i + 1]
+                i += 1
+            i += 1
+
+            if opt in ('-H', '--header'):
+                header = cls._parse_header(value)
+                if header is None:
+                    continue
+                if header[0].lower() == 'cookie':
+                    cookies.append(header[1])
+                else:
+                    headers.append(header)
+            elif opt in ('-b', '--cookie'):
+                if '=' in value:
+                    cookies.append(value)
+                else:
+                    Logger.warning(f"--curl-file: cookie file '{value}' ignored (only inline cookies are supported).")
+            elif opt in ('-A', '--user-agent'):
+                headers.append(('User-Agent', value))
+            elif opt in ('-e', '--referer'):
+                headers.append(('Referer', value))
+            elif opt == '--url':
+                url = value
+            elif opt in ('-X', '--request'):
+                if value.upper() != 'GET':
+                    ignored.add(f"{opt} {value}")
+            elif opt in ('-d', '--data', '--data-raw', '--data-binary',
+                         '--data-urlencode', '--data-ascii', '-F', '--form', '-T', '--upload-file'):
+                ignored.add('request body')
+            elif opt in ('-u', '--user'):
+                ignored.add(opt)
+
+        if ignored:
+            Logger.warning(f"--curl-file: ignored {', '.join(sorted(ignored))}; only headers and cookies are imported.")
+
+        if cookies:
+            headers.append(('Cookie', '; '.join(c.strip().rstrip(';') for c in cookies if c.strip())))
+
+        filtered: List[Tuple[str, str]] = []
+        for name, val in headers:
+            lname = name.lower()
+            if lname in cls.DROPPED_HEADERS or name.startswith(':'):
+                continue
+            # Last occurrence wins, like curl.
+            filtered = [(n, v) for n, v in filtered if n.lower() != lname]
+            filtered.append((name, val))
+
+        if url is not None and not looks_like_url(url):
+            url = None
+
+        return cls(url, filtered)
+
+    @staticmethod
+    def _parse_header(raw: str) -> Optional[Tuple[str, str]]:
+        """Parse a -H value. Returns None for curl's header-removal syntax."""
+        if raw.endswith(';') and ':' not in raw:
+            # 'Name;' means send the header with an empty value.
+            return raw[:-1].strip(), ''
+        if ':' not in raw:
+            raise CurlParseError(f"Malformed header (missing ':'): {raw!r}")
+        name, _, val = raw.partition(':')
+        name, val = name.strip(), val.strip()
+        if not name:
+            raise CurlParseError(f"Malformed header (empty name): {raw!r}")
+        if not val:
+            # 'Name:' tells curl to remove the header; nothing to send.
+            return None
+        return name, val
+
+    @classmethod
+    def from_file(cls, path: str) -> 'CurlProfile':
+        """
+        Load a curl command from a file, or from stdin when path is '-'.
+
+        Raises:
+            CurlParseError: If the file cannot be read or parsed
+        """
+        try:
+            if path == '-':
+                text = sys.stdin.read()
+            else:
+                with open(path, 'r', encoding='utf-8-sig') as fh:
+                    text = fh.read()
+        except OSError as exc:
+            raise CurlParseError(f"Cannot read curl file '{path}': {exc.strerror or exc}")
+        except UnicodeDecodeError:
+            raise CurlParseError(f"Curl file '{path}' is not valid UTF-8 text.")
+        return cls.parse(text)
+
+    # -- Request building ---------------------------------------------------
+
+    @property
+    def user_agent(self) -> Optional[str]:
+        for name, val in self.headers:
+            if name.lower() == 'user-agent':
+                return val
+        return None
+
+    def in_scope(self, url: str) -> bool:
+        """Return True if credential headers may be sent to this URL."""
+        host = urlparse(url).hostname
+        return bool(self.scope_host and host and host.lower() == self.scope_host.lower())
+
+    def headers_for(self, url: str) -> Dict[str, str]:
+        """
+        Headers to send for a request to url (User-Agent excluded; it is
+        resolved globally so that --user-agent can override it).
+        """
+        excluded = {'user-agent'}
+        if not self.in_scope(url):
+            excluded |= self.SENSITIVE_HEADERS
+        return {name: val for name, val in self.headers if name.lower() not in excluded}
+
+    def open(self, request: urllib.request.Request, timeout: int):
+        """Open a request, stripping credential headers on cross-host redirects."""
+        if self._opener is None:
+            self._opener = urllib.request.build_opener(_ScopedRedirectHandler(self))
+        return self._opener.open(request, timeout=timeout)
+
+
+class _ScopedRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Redirect handler that drops credential headers when leaving the source host."""
+
+    def __init__(self, profile: CurlProfile):
+        super().__init__()
+        self.profile = profile
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and not self.profile.in_scope(newurl):
+            for name in list(new.headers):
+                if name.lower() in CurlProfile.SENSITIVE_HEADERS:
+                    del new.headers[name]
+            for name in list(new.unredirected_hdrs):
+                if name.lower() in CurlProfile.SENSITIVE_HEADERS:
+                    del new.unredirected_hdrs[name]
+        return new
+
+
+CURL_PROFILE: Optional[CurlProfile] = None
+
+
+def build_request_headers(url: str) -> Dict[str, str]:
+    """
+    Build the HTTP headers for a scraping request.
+
+    Without --curl-file this is just the User-Agent. With it, the browser
+    headers are replayed, credentials only to the host they came from.
+    """
+    headers = CURL_PROFILE.headers_for(url) if CURL_PROFILE else {}
+    headers['User-Agent'] = USER_AGENT
+    return headers
+
+
+def open_url(request: urllib.request.Request, timeout: int):
+    """Open a scraping request, honouring --curl-file redirect scoping."""
+    if CURL_PROFILE is not None:
+        return CURL_PROFILE.open(request, timeout)
+    return urllib.request.urlopen(request, timeout=timeout)
+
+
+# ============================================================================
 # Web Scraping Classes
 # ============================================================================
 
@@ -675,8 +1029,8 @@ class WebScraper:
             links, since e.g. GitHub Pages 301-redirects '/repo' to '/repo/'.
         """
         try:
-            request = urllib.request.Request(url, headers={'User-Agent': USER_AGENT})
-            with urllib.request.urlopen(request, timeout=timeout) as response:
+            request = urllib.request.Request(url, headers=build_request_headers(url))
+            with open_url(request, timeout) as response:
                 # Final URL after any redirects; relative links resolve against it.
                 effective_url = response.geturl() or url
 
@@ -798,8 +1152,8 @@ class FileDownloader:
 
             local_filename = os.path.join(download_dir, filename)
 
-            request = urllib.request.Request(encoded_url, headers={'User-Agent': USER_AGENT})
-            with urllib.request.urlopen(request, timeout=timeout) as response:
+            request = urllib.request.Request(encoded_url, headers=build_request_headers(encoded_url))
+            with open_url(request, timeout) as response:
                 data = response.read()
                 file_hash = FileDownloader.calculate_hash(data)
 
@@ -1938,7 +2292,9 @@ def main():
                "   # Download files from a website to a specified directory:\n"
                "python3 MetaDetective.py --scraping --download-dir directory --url https://example.com/\n"
                "   # Download files from a website with specified depth:\n"
-               "python3 MetaDetective.py --scraping --depth 1 --download-dir directory --url https://example.com/\n",
+               "python3 MetaDetective.py --scraping --depth 1 --download-dir directory --url https://example.com/\n\n"
+               "   # Scrape a bot-protected site with headers copied from your browser ('Copy as cURL'):\n"
+               "python3 MetaDetective.py --scraping --scan --curl-file request.txt --url https://example.com/\n",
         formatter_class=argparse.RawTextHelpFormatter
     )
 
@@ -1965,6 +2321,14 @@ def main():
         help=f"Custom User-Agent string or preset name. Presets: {ua_presets_list}. "
              "Example: --user-agent stealth, --user-agent chrome-win, "
              "or --user-agent 'MetaDetective/2.0'"
+    )
+    scraping_group.add_argument(
+        "--curl-file", metavar="FILE",
+        help="Replay a real browser's request headers to get past bot detection.\n"
+             "FILE holds a request copied with the browser dev tools 'Copy as cURL'\n"
+             "(bash or cmd); use '-' to read it from stdin. All headers are reused;\n"
+             "cookies and auth headers are only sent to the host it was copied from.\n"
+             "--user-agent, if also given, overrides the imported User-Agent."
     )
 
     analysis_group = parser.add_argument_group('analysis options', 'Main analysis options.')
@@ -2009,6 +2373,9 @@ def main():
         NOMINATIM_SCHEME = parsed_nominatim.scheme
         NOMINATIM_HOST = parsed_nominatim.netloc
 
+    if args.curl_file and not args.scraping:
+        parser.error("--curl-file only applies to scraping mode (--scraping/-s or a URL target).")
+
     if args.scraping:
         if args.directory or args.files or args.ignore:
             parser.error("Analysis arguments (--directory/-d, --files/-f, and --ignore/-i) cannot be used with scrapping options (--scraping/-s).")
@@ -2029,7 +2396,21 @@ def main():
 
         extensions = args.extensions if args.extensions else EXTENSIONS.copy()
 
-        global USER_AGENT
+        global USER_AGENT, CURL_PROFILE
+        if args.curl_file:
+            try:
+                CURL_PROFILE = CurlProfile.from_file(args.curl_file)
+            except CurlParseError as exc:
+                parser.error(f"--curl-file: {exc}")
+            if CURL_PROFILE.scope_host is None:
+                CURL_PROFILE.scope_host = urlparse(args.url).hostname
+                Logger.warning("--curl-file: no URL found in the curl command; cookies and auth headers will be scoped to the --url host.")
+            elif not CURL_PROFILE.in_scope(args.url):
+                Logger.warning(f"--curl-file: command was copied from '{CURL_PROFILE.scope_host}' but scraping '{urlparse(args.url).hostname}'; cookies and auth headers will only be sent to '{CURL_PROFILE.scope_host}'.")
+            if CURL_PROFILE.user_agent and not args.user_agent:
+                USER_AGENT = CURL_PROFILE.user_agent
+            print(f"[*] Imported {len(CURL_PROFILE.headers)} header(s) from curl file for {CURL_PROFILE.scope_host}")
+
         if args.user_agent:
             ua = args.user_agent
             if ua in UA_PRESETS:
